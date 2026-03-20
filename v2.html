@@ -221,6 +221,7 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
     <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">Rachas máximas</span></div><div class="card-body" id="anl-rachas"></div></div>
     <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">Disciplina</span></div><div class="card-body" id="anl-disc"></div></div>
   </div>
+  <div class="card"><div class="card-head"><span class="card-title">📊 1ª vs 2ª Vuelta</span></div><div class="card-body" id="anl-vueltas"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">📈 Proyección final</span></div><div class="card-body" id="anl-proy"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">📅 Rendimiento mensual</span></div><div style="overflow-x:auto" id="anl-meses"></div></div>
 </div>
@@ -634,6 +635,41 @@ function renderAnalisis(){
     '</tbody></table>';
   document.getElementById('anl-rachas').innerHTML=arow('Victorias consecutivas','<span style="color:var(--win)">'+maxStreak(pl,function(m){return m.res==='G';})+'</span>')+arow('Sin perder consecutivos','<span style="color:var(--draw)">'+maxStreak(pl,function(m){return m.res!=='P';})+'</span>')+arow('Sin ganar consecutivos','<span style="color:var(--loss)">'+maxStreak(pl,function(m){return m.res!=='G';})+'</span>');
   document.getElementById('anl-disc').innerHTML=arow('🟨 Amarillas total','<span style="color:var(--yellow)">'+totY+'</span>')+arow('🟥 Rojas total','<span style="color:var(--loss)">'+totR+'</span>')+arow('Media amarillas/partido',''+(totY/n).toFixed(2));
+  var pv=pl.filter(function(m){return m.j<=14;});
+  var sv=pl.filter(function(m){return m.j>14;});
+  function vStats(arr){
+    var hn=arr.length;
+    if(!hn)return{n:0,pts:0,gf:0,gc:0,w:0,winPct:0,ptsPM:0,gfPM:0,gcPM:0};
+    var hw=arr.filter(function(m){return m.res==='G';}).length;
+    var hd=arr.filter(function(m){return m.res==='E';}).length;
+    var hgf=sum(arr,function(m){return m.gf;});
+    var hgc=sum(arr,function(m){return m.gc;});
+    var hpts=hw*3+hd;
+    return{n:hn,pts:hpts,gf:hgf,gc:hgc,w:hw,winPct:Math.round(hw/hn*100),ptsPM:hpts/hn,gfPM:hgf/hn,gcPM:hgc/hn};
+  }
+  var vs1=vStats(pv),vs2=vStats(sv);
+  function vColor(a,b,lo){if(a===b)return'';return(lo?a<b:a>b)?'color:var(--win)':'color:var(--loss)';}
+  function vBlock(lbl,jrng,s,o){
+    var win=s.n>0&&(s.ptsPM>o.ptsPM||(s.ptsPM===o.ptsPM&&s.winPct>o.winPct));
+    var bg=win?'background:var(--accent-light);border:1px solid var(--accent)':'background:var(--surface2);border:1px solid var(--border)';
+    var tc=win?'color:var(--accent)':'color:var(--ink2)';
+    var badge=win?'<span style="font-size:9px;background:var(--accent);color:#fff;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:middle">MEJOR</span>':'';
+    return'<div style="'+bg+';border-radius:var(--r);padding:14px">'+
+      '<div style="font-size:11px;font-weight:700;'+tc+';margin-bottom:2px">'+lbl+badge+'</div>'+
+      '<div style="font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px">'+jrng+' · '+s.n+' partidos</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center">'+
+        '<div><div style="font-size:24px;font-weight:700;'+vColor(s.ptsPM,o.ptsPM,false)+'">'+s.pts+'</div><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Puntos</div><div style="font-size:10px;color:var(--ink3)">'+s.ptsPM.toFixed(2)+'/pdo</div></div>'+
+        '<div><div style="font-size:24px;font-weight:700;'+vColor(s.winPct,o.winPct,false)+'">'+s.winPct+'%</div><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Victorias</div><div style="font-size:10px;color:var(--ink3)">'+s.w+' de '+s.n+'</div></div>'+
+        '<div><div style="font-size:24px;font-weight:700;'+vColor(s.gfPM,o.gfPM,false)+'">'+s.gf+'</div><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">GF</div><div style="font-size:10px;color:var(--ink3)">'+s.gfPM.toFixed(1)+'/pdo</div></div>'+
+        '<div><div style="font-size:24px;font-weight:700;'+vColor(s.gcPM,o.gcPM,true)+'">'+s.gc+'</div><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">GC</div><div style="font-size:10px;color:var(--ink3)">'+s.gcPM.toFixed(1)+'/pdo</div></div>'+
+      '</div>'+
+    '</div>';
+  }
+  document.getElementById('anl-vueltas').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      vBlock('1ª Vuelta','J1–J14',vs1,vs2)+
+      vBlock('2ª Vuelta','J15–J21',vs2,vs1)+
+    '</div>';
   var MESES=['Ene','Feb','Mar','Apr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   var byMonth={};
   pl.forEach(function(m){
