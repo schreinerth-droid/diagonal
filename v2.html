@@ -194,10 +194,7 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
 </div>
 
 <div id="jugadores" class="sec">
-  <div class="g2">
-    <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">⚽ GF por tramo</span></div><div class="card-body" id="tramo-gf"></div></div>
-    <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">🥅 GC por tramo</span></div><div class="card-body" id="tramo-gc"></div></div>
-  </div>
+  <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">Goles por tramo</span><span style="font-size:10px;font-weight:600"><span style="color:var(--accent)">■ GF</span> &nbsp;<span style="color:var(--loss)">■ GC</span></span></div><div style="overflow-x:auto;padding:8px 14px 4px"><svg id="tramo-chart" viewBox="0 0 600 160" style="width:100%;min-width:280px;height:auto;display:block"></svg></div></div>
   <div style="height:12px"></div>
   <div class="card" style="margin-bottom:0"><div style="overflow-x:auto">
     <table class="ptbl"><thead><tr>
@@ -570,9 +567,22 @@ function renderJugadores(){
   var tGF=[0,0,0,0,0,0],tGC=[0,0,0,0,0,0];
   MATCHES.forEach(function(m){(m.goals||[]).forEach(function(g){var t=tramo(parseInt(g.min,10)||0);if(g.type==='gf')tGF[t]++;else tGC[t]++;});});
   var labels=["1-15'","16-30'","31-45'","46-60'","61-75'","76-90'"];
-  function tbars(arr,c){var mx=maxN(arr.concat([1]));return arr.map(function(v,i){return bbar(labels[i],v,mx,c);}).join('');}
-  document.getElementById('tramo-gf').innerHTML=tbars(tGF,'var(--accent)');
-  document.getElementById('tramo-gc').innerHTML=tbars(tGC,'var(--loss)');
+  var tW=600,tH=160,tlpx=30,trpx=8,ttpy=10,tbpy=22,tChH=tH-ttpy-tbpy;
+  var tmx=Math.max.apply(null,tGF.concat(tGC).concat([1]));
+  var tgW=(tW-tlpx-trpx)/6,tbW=tgW*0.28,tgap=3,tbase=ttpy+tChH;
+  var tch='<line x1="'+tlpx+'" y1="'+tbase+'" x2="'+(tW-trpx)+'" y2="'+tbase+'" stroke="#e2ddd7" stroke-width="1.5"/>';
+  for(var tv=1;tv<=tmx;tv++){var tgy=(ttpy+tChH-(tv/tmx)*tChH).toFixed(1);tch+='<line x1="'+tlpx+'" y1="'+tgy+'" x2="'+(tW-trpx)+'" y2="'+tgy+'" stroke="#e2ddd7" stroke-width="0.6"/><text x="'+(tlpx-4)+'" y="'+(parseFloat(tgy)+3).toFixed(1)+'" text-anchor="end" fill="#9a9690" font-size="9">'+tv+'</text>';}
+  for(var ti=0;ti<6;ti++){
+    var tcx=(tlpx+(ti+0.5)*tgW).toFixed(1);
+    var tgfH=tGF[ti]>0?((tGF[ti]/tmx)*tChH).toFixed(1):0;
+    var tgcH=tGC[ti]>0?((tGC[ti]/tmx)*tChH).toFixed(1):0;
+    var tgfX=(tlpx+(ti+0.5)*tgW-tgap/2-tbW).toFixed(1);
+    var tgcX=(tlpx+(ti+0.5)*tgW+tgap/2).toFixed(1);
+    if(tGF[ti]>0){tch+='<rect x="'+tgfX+'" y="'+(tbase-parseFloat(tgfH)).toFixed(1)+'" width="'+tbW.toFixed(1)+'" height="'+tgfH+'" fill="var(--accent)" opacity=".85" rx="2"/>';tch+='<text x="'+(parseFloat(tgfX)+tbW/2).toFixed(1)+'" y="'+(tbase-parseFloat(tgfH)-3).toFixed(1)+'" text-anchor="middle" fill="var(--accent)" font-size="9" font-weight="700">'+tGF[ti]+'</text>';}
+    if(tGC[ti]>0){tch+='<rect x="'+tgcX+'" y="'+(tbase-parseFloat(tgcH)).toFixed(1)+'" width="'+tbW.toFixed(1)+'" height="'+tgcH+'" fill="var(--loss)" opacity=".55" rx="2"/>';tch+='<text x="'+(parseFloat(tgcX)+tbW/2).toFixed(1)+'" y="'+(tbase-parseFloat(tgcH)-3).toFixed(1)+'" text-anchor="middle" fill="var(--loss)" font-size="9" font-weight="700">'+tGC[ti]+'</text>';}
+    tch+='<text x="'+tcx+'" y="'+(tH-4)+'" text-anchor="middle" fill="#9a9690" font-size="9">'+labels[ti]+'</text>';
+  }
+  document.getElementById('tramo-chart').innerHTML=tch;
   var players=buildPlayers();
   document.getElementById('players-body').innerHTML=players.sort(function(a,b){return b.goals-a.goals||(b.tit+b.sup)-(a.tit+a.sup);}).map(function(p){
     var t=p.tit+p.sup;
