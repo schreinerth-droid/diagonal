@@ -102,20 +102,6 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
 .next-hl{border-left:3px solid var(--accent);background:var(--accent-light)!important}
 .arow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
 .arow:last-child{border-bottom:none}.arow-lbl{color:var(--ink2)}.arow-val{font-size:17px;font-weight:700;color:var(--accent)}
-.am-input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:var(--font);background:var(--surface);color:var(--ink)}
-.am-input:focus{outline:none;border-color:var(--accent)}
-textarea.am-input{resize:vertical}
-.am-btn{padding:9px 18px;border-radius:var(--r);border:none;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:opacity .15s}
-.am-btn-primary{background:var(--accent);color:#fff}.am-btn-primary:hover{opacity:.85}.am-btn-primary:disabled{opacity:.4;cursor:not-allowed}
-.am-btn-secondary{background:var(--surface2);color:var(--ink2)}.am-btn-secondary:hover{background:var(--border)}
-.am-field{margin-bottom:14px}
-.am-label{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;display:block}
-.am-preview-hdr{display:flex;align-items:center;gap:10px;padding:0 0 12px;border-bottom:1px solid var(--border);margin-bottom:14px}
-.am-section{margin-bottom:14px}
-.am-section-title{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px}
-.am-code{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;font-size:11px;line-height:1.5;overflow:auto;max-height:220px;white-space:pre;font-family:ui-monospace,monospace;tab-size:2}
-.am-spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:am-spin .7s linear infinite;vertical-align:middle;margin-right:5px}
-@keyframes am-spin{to{transform:rotate(360deg)}}
 @media(max-width:680px){.kpi-row{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr}.stat-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -139,7 +125,6 @@ textarea.am-input{resize:vertical}
   <button class="nb" onclick="App.tab('jugadores',this)">Jugadores</button>
   <button class="nb" onclick="App.tab('arbitros',this)">Árbitros</button>
   <button class="nb" onclick="App.tab('analisis',this)">Análisis</button>
-  <button class="nb" style="margin-left:auto;color:var(--accent)" onclick="App.tab('add-match',this)">+ Añadir partido</button>
 </div></div>
 
 <main>
@@ -237,73 +222,7 @@ textarea.am-input{resize:vertical}
     <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">Disciplina</span></div><div class="card-body" id="anl-disc"></div></div>
   </div>
   <div class="card"><div class="card-head"><span class="card-title">📈 Proyección final</span></div><div class="card-body" id="anl-proy"></div></div>
-</div>
-
-<div id="add-match" class="sec">
-
-  <!-- API Key -->
-  <div class="card">
-    <div class="card-head">
-      <span class="card-title">🔑 API Key de Anthropic</span>
-      <span id="am-key-status" style="font-size:11px;color:var(--win);font-weight:600"></span>
-    </div>
-    <div class="card-body">
-      <div class="am-field" style="margin-bottom:0">
-        <div style="display:flex;gap:8px">
-          <input type="password" id="am-apikey" class="am-input" placeholder="sk-ant-api03-..." style="flex:1">
-          <button class="am-btn am-btn-primary" style="flex-shrink:0" onclick="AmForm.saveKey()">Guardar</button>
-        </div>
-        <div style="font-size:11px;color:var(--ink3);margin-top:5px">Se guarda en localStorage. Solo se usa para parsear actas desde este navegador.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Paste form -->
-  <div class="card">
-    <div class="card-head"><span class="card-title">Parsear acta con Claude</span></div>
-    <div class="card-body">
-      <div class="am-field">
-        <label class="am-label" for="am-text">Texto del acta (copia y pega desde fcf.cat)</label>
-        <textarea id="am-text" class="am-input" rows="10" placeholder="Pega aquí todo el texto del acta..."></textarea>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <button id="am-parse-btn" class="am-btn am-btn-primary" onclick="AmForm.parse()">Parsear con Claude</button>
-        <span id="am-loading" style="display:none;font-size:12px;color:var(--ink3)"><span class="am-spinner"></span>Analizando…</span>
-        <span id="am-error" style="display:none;font-size:12px;color:var(--loss);font-weight:600"></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Preview (hidden until parse) -->
-  <div class="card" id="am-preview-card" style="display:none">
-    <div class="card-head">
-      <span class="card-title">Vista previa</span>
-      <span id="am-warn-badge" style="display:none;background:var(--yellow-bg);color:var(--yellow);font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px">⚠️ Jugadores sin resolver</span>
-    </div>
-    <div class="card-body">
-      <div id="am-preview-content"></div>
-      <div style="display:flex;gap:8px;margin-top:16px">
-        <button class="am-btn am-btn-primary" onclick="AmForm.confirm()">✓ Confirmar e insertar</button>
-        <button class="am-btn am-btn-secondary" onclick="AmForm.cancel()">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Success (hidden until confirm) -->
-  <div class="card" id="am-success-card" style="display:none">
-    <div class="card-head"><span class="card-title">✅ Partido añadido al dashboard</span></div>
-    <div class="card-body">
-      <p style="font-size:13px;color:var(--ink2);margin-bottom:14px">El partido está en memoria. Para guardarlo permanentemente en el archivo HTML:</p>
-      <button id="am-download-btn" class="am-btn am-btn-primary" onclick="AmForm.download()" style="margin-bottom:14px">⬇️ Descargar v2.html actualizado</button>
-      <div style="font-size:11px;color:var(--ink3);margin-bottom:6px">O copia este fragmento y pégalo justo antes del <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">];</code> que cierra <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">MATCHES</code>:</div>
-      <pre id="am-code-out" class="am-code"></pre>
-      <div style="margin-top:12px;padding:10px 12px;background:var(--yellow-bg);border-radius:var(--r);font-size:12px;color:var(--yellow)">
-        Recuerda actualizar también <strong>CLAS</strong> (clasificación) y <strong>UPCOMING</strong> si procede.
-      </div>
-      <button class="am-btn am-btn-secondary" style="margin-top:14px" onclick="AmForm.reset()">Añadir otro partido</button>
-    </div>
-  </div>
-
+  <div class="card"><div class="card-head"><span class="card-title">📅 Rendimiento mensual</span></div><div style="overflow-x:auto"><table class="tbl" id="anl-meses"></table></div></div>
 </div>
 
 </main>
@@ -715,6 +634,45 @@ function renderAnalisis(){
     '</tbody></table>';
   document.getElementById('anl-rachas').innerHTML=arow('Victorias consecutivas','<span style="color:var(--win)">'+maxStreak(pl,function(m){return m.res==='G';})+'</span>')+arow('Sin perder consecutivos','<span style="color:var(--draw)">'+maxStreak(pl,function(m){return m.res!=='P';})+'</span>')+arow('Sin ganar consecutivos','<span style="color:var(--loss)">'+maxStreak(pl,function(m){return m.res!=='G';})+'</span>');
   document.getElementById('anl-disc').innerHTML=arow('🟨 Amarillas total','<span style="color:var(--yellow)">'+totY+'</span>')+arow('🟥 Rojas total','<span style="color:var(--loss)">'+totR+'</span>')+arow('Media amarillas/partido',''+(totY/n).toFixed(2));
+  var MESES=['Ene','Feb','Mar','Apr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var byMonth={};
+  pl.forEach(function(m){
+    var key=m.date?m.date.slice(0,7):null;
+    if(!key) return;
+    if(!byMonth[key]) byMonth[key]={key:key,pj:0,w:0,d:0,l:0,gf:0,gc:0};
+    var b=byMonth[key];
+    b.pj++; b.gf+=m.gf; b.gc+=m.gc;
+    if(m.res==='G') b.w++; else if(m.res==='E') b.d++; else b.l++;
+  });
+  var months=Object.keys(byMonth).sort();
+  var mTh='<thead><tr>'+
+    '<th class="tl">Mes</th>'+
+    '<th>PJ</th>'+
+    '<th style="color:var(--win)">V</th>'+
+    '<th style="color:var(--draw)">E</th>'+
+    '<th style="color:var(--loss)">D</th>'+
+    '<th style="color:var(--accent)">GF</th>'+
+    '<th style="color:var(--loss)">GC</th>'+
+    '<th style="color:var(--accent)">Pts</th>'+
+    '</tr></thead>';
+  var mRows=months.map(function(k){
+    var b=byMonth[k];
+    var pts=b.w*3+b.d;
+    var bg=b.w>b.l?'background:var(--win-bg)':b.l>b.w?'background:var(--loss-bg)':'';
+    var parts=k.split('-');
+    var label=MESES[parseInt(parts[1],10)-1]+' '+parts[0];
+    return '<tr style="'+bg+'">'+
+      '<td class="tl" style="font-weight:600">'+label+'</td>'+
+      '<td>'+b.pj+'</td>'+
+      '<td style="color:var(--win);font-weight:700">'+b.w+'</td>'+
+      '<td style="color:var(--draw);font-weight:700">'+b.d+'</td>'+
+      '<td style="color:var(--loss);font-weight:700">'+b.l+'</td>'+
+      '<td>'+b.gf+'</td>'+
+      '<td>'+b.gc+'</td>'+
+      '<td style="color:var(--accent);font-weight:700">'+pts+'</td>'+
+      '</tr>';
+  }).join('');
+  document.getElementById('anl-meses').innerHTML=mTh+'<tbody>'+mRows+'</tbody>';
   document.getElementById('anl-proy').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center"><div><div style="font-size:28px;font-weight:700;color:var(--accent)">'+proy+'</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Pts proyectados</div></div><div><div style="font-size:28px;font-weight:700">'+n+'</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Partidos cargados</div></div><div><div style="font-size:28px;font-weight:700;color:var(--ink3)">'+pend+'</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Pendientes</div></div></div><div style="font-size:10px;color:var(--ink3);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">Ritmo actual: '+(pts/n).toFixed(2)+' pts/partido</div>';
 }
 
@@ -738,249 +696,6 @@ renderJugadores();
 renderArbitros();
 renderAnalisis();
 
-// ═══════════════════════════════════════════════════
-// ADD-MATCH — parseo de acta via Anthropic API
-// ═══════════════════════════════════════════════════
-var AmForm = (function(){
-  var _parsed = null;
-  var _serialized = null;
-
-  function qv(v){
-    if(v===null||v===undefined) return 'null';
-    if(typeof v==='number') return String(v);
-    return "'"+String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";
-  }
-  function serArr(arr){
-    if(!arr||!arr.length) return '[]';
-    return '['+arr.map(function(o){
-      return '{'+Object.keys(o).map(function(k){return k+':'+qv(o[k]);}).join(',') + '}';
-    }).join(',')+']';
-  }
-  function serMatch(m){
-    return '  {j:'+m.j+',date:'+qv(m.date)+',loc:'+qv(m.loc)+',home:'+qv(m.home)+',away:'+qv(m.away)+',gf:'+m.gf+',gc:'+m.gc+',res:'+qv(m.res)+',\n'+
-      '   ref:'+qv(m.ref)+',refDel:'+qv(m.refDel)+',\n'+
-      '   titulars:'+serArr(m.titulars)+',\n'+
-      '   suplents:'+serArr(m.suplents)+',\n'+
-      '   goals:'+serArr(m.goals)+',\n'+
-      '   yellows:'+serArr(m.yellows)+',reds:'+serArr(m.reds)+'}';
-  }
-
-  function esc(s){ return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
-
-  function buildSystemPrompt(){
-    var pd={};
-    Object.keys(PLAYERS).forEach(function(k){ pd[k]={name:PLAYERS[k].name,activeDorsal:PLAYERS[k].activeDorsal,allDorsals:PLAYERS[k].allDorsals}; });
-    return 'Eres un extractor de datos de actas de fútbol de la FCF (Federació Catalana de Futbol).\n\n'+
-      'El equipo es "Diagonal Club Esp. A". En el acta puede aparecer como "Diagonal" o variante.\n\n'+
-      'Diccionario de jugadores (playerId → {name, activeDorsal, allDorsals}):\n'+JSON.stringify(pd,null,2)+'\n\n'+
-      'Extrae los datos del acta y devuelve ÚNICAMENTE un objeto JSON con esta estructura:\n'+
-      '{\n'+
-      '  "j": <jornada, integer>,\n'+
-      '  "date": "<YYYY-MM-DD>",\n'+
-      '  "loc": "<C si Diagonal es local, F si es visitante>",\n'+
-      '  "home": "<nombre equipo local>",\n'+
-      '  "away": "<nombre equipo visitante>",\n'+
-      '  "gf": <goles de Diagonal, integer>,\n'+
-      '  "gc": <goles del rival, integer>,\n'+
-      '  "res": "<G victoria | E empate | P derrota>",\n'+
-      '  "ref": "<Apellido Apellido, Nombre | null>",\n'+
-      '  "refDel": "<delegación árbitro, ej. Barcelona1 | null>",\n'+
-      '  "titulars": [{id:<playerId|null>, d:<dorsal>}],\n'+
-      '  "suplents":  [{id:<playerId|null>, d:<dorsal>}],\n'+
-      '  "goals":     [{min:<integer>, type:<"gf"|"gc">, playerId:<id|null>}],\n'+
-      '  "yellows":   [{playerId:<id|null>, d:<dorsal>}],\n'+
-      '  "reds":      [{playerId:<id|null>, d:<dorsal>}]\n'+
-      '}\n\n'+
-      'Reglas playerId: 1) match por nombre (ignora acentos/mayúsculas). 2) fallback por dorsal en allDorsals. 3) si no resuelves, usa null.\n'+
-      'titulars/suplents/yellows/reds: solo jugadores de Diagonal.\n'+
-      'goals: todos los goles del partido; type="gf" si marca Diagonal (incluye g.p. rival), type="gc" si marca el rival.\n'+
-      'Responde ÚNICAMENTE con el JSON, sin markdown ni texto adicional.';
-  }
-
-  function setLoading(on){
-    document.getElementById('am-parse-btn').disabled=on;
-    document.getElementById('am-loading').style.display=on?'':'none';
-    if(!on) document.getElementById('am-error').style.display='none';
-  }
-  function showError(msg){
-    var el=document.getElementById('am-error');
-    el.textContent=msg; el.style.display='';
-    setLoading(false);
-  }
-
-  function renderPreview(m){
-    var unresolved=[];
-    var isC=m.loc==='C';
-    var hs=isC?m.gf:m.gc, as=isC?m.gc:m.gf;
-    var resLabel=m.res==='G'?'🟢 Victoria':m.res==='E'?'🟡 Empate':'🔴 Derrota';
-    var html=[];
-
-    html.push('<div class="am-preview-hdr">');
-    html.push('<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">J'+m.j+' · '+fmtDate(m.date)+' · '+(isC?'Casa':'Fuera')+'</div>');
-    html.push('<div style="font-size:16px;font-weight:700">'+esc(m.home)+' <span style="color:var(--accent)">'+hs+' – '+as+'</span> '+esc(m.away)+'</div></div>');
-    html.push('<div style="font-size:14px;font-weight:700">'+resLabel+'</div></div>');
-
-    if(m.ref) html.push('<div style="font-size:12px;color:var(--ink2);margin-bottom:12px">⚖️ '+esc(m.ref)+(m.refDel?' ('+esc(m.refDel)+')':'')+'</div>');
-
-    function playerChip(p,isTit){
-      var name=p.id&&PLAYERS[p.id]?PLAYERS[p.id].name.split(',')[0]:'?';
-      var unres=!p.id;
-      if(unres) unresolved.push((isTit?'Tit':'Sup')+'. dorsal '+p.d);
-      var bg=unres?'var(--yellow-bg)':(isTit?'var(--accent-light)':'var(--surface2)');
-      var fg=unres?'var(--yellow)':(isTit?'var(--accent)':'var(--ink2)');
-      return '<span style="background:'+bg+';color:'+fg+';border-radius:3px;padding:2px 7px;font-size:11px;font-weight:600"><span class="dor">'+p.d+'</span>'+esc(name)+'</span>';
-    }
-
-    if((m.titulars||[]).length||(m.suplents||[]).length){
-      html.push('<div class="am-section"><div class="am-section-title">Once inicial</div>');
-      html.push('<div style="display:flex;flex-wrap:wrap;gap:4px">');
-      (m.titulars||[]).forEach(function(p){html.push(playerChip(p,true));});
-      html.push('</div>');
-      if((m.suplents||[]).length){
-        html.push('<div style="font-size:10px;color:var(--ink3);margin:5px 0 4px;font-weight:600;letter-spacing:.07em;text-transform:uppercase">Suplentes</div>');
-        html.push('<div style="display:flex;flex-wrap:wrap;gap:4px">');
-        (m.suplents||[]).forEach(function(p){html.push(playerChip(p,false));});
-        html.push('</div>');
-      }
-      html.push('</div>');
-    }
-
-    if((m.goals||[]).length){
-      html.push('<div class="am-section"><div class="am-section-title">Goles</div>');
-      (m.goals||[]).forEach(function(g){
-        var scorer=g.playerId&&PLAYERS[g.playerId]?PLAYERS[g.playerId].name.split(',')[0]:'—';
-        html.push('<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">'+(g.min?g.min+"'":"?'")+' '+(g.type==='gf'?'⚽':'🥅')+' '+esc(scorer)+(g.type==='gc'?' <span style="color:var(--ink3)">(en contra)</span>':'')+'</div>');
-      });
-      html.push('</div>');
-    }
-
-    var cards=(m.yellows||[]).map(function(c){return{c:c,t:'🟨'};}).concat((m.reds||[]).map(function(c){return{c:c,t:'🟥'};}));
-    if(cards.length){
-      html.push('<div class="am-section"><div class="am-section-title">Tarjetas</div>');
-      cards.forEach(function(e){
-        var name=e.c.playerId&&PLAYERS[e.c.playerId]?PLAYERS[e.c.playerId].name.split(',')[0]:'dorsal '+e.c.d;
-        html.push('<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">'+e.t+' '+esc(name)+'</div>');
-      });
-      html.push('</div>');
-    }
-
-    document.getElementById('am-preview-content').innerHTML=html.join('');
-    document.getElementById('am-preview-card').style.display='';
-    var wb=document.getElementById('am-warn-badge');
-    wb.style.display=unresolved.length?'':'none';
-    if(unresolved.length) wb.title=unresolved.join(', ');
-  }
-
-  function init(){
-    var stored=localStorage.getItem('anthropic_api_key');
-    if(stored){
-      document.getElementById('am-apikey').value=stored;
-      document.getElementById('am-key-status').textContent='✓ Guardada';
-    }
-  }
-
-  function saveKey(){
-    var k=document.getElementById('am-apikey').value.trim();
-    if(!k) return;
-    localStorage.setItem('anthropic_api_key',k);
-    document.getElementById('am-key-status').textContent='✓ Guardada';
-  }
-
-  function parse(){
-    var key=localStorage.getItem('anthropic_api_key')||document.getElementById('am-apikey').value.trim();
-    if(!key){showError('Falta la API key de Anthropic');return;}
-    var text=document.getElementById('am-text').value.trim();
-    if(!text){showError('Pega el texto del acta primero');return;}
-    document.getElementById('am-preview-card').style.display='none';
-    document.getElementById('am-success-card').style.display='none';
-    setLoading(true);
-
-    fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'content-type':'application/json',
-        'x-api-key':key,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:2048,
-        system:buildSystemPrompt(),
-        messages:[{role:'user',content:'Acta:\n\n'+text}]
-      })
-    })
-    .then(function(r){
-      if(!r.ok) return r.json().then(function(e){throw new Error('API '+r.status+': '+(e.error&&e.error.message||JSON.stringify(e)));});
-      return r.json();
-    })
-    .then(function(data){
-      var raw=data.content&&data.content[0]&&data.content[0].text;
-      if(!raw) throw new Error('Respuesta vacía');
-      raw=raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim();
-      var m=JSON.parse(raw);
-      if(typeof m.j!=='number'||!m.date||!m.loc||!m.home||!m.away) throw new Error('JSON incompleto');
-      _parsed=m;
-      _serialized=serMatch(m);
-      renderPreview(m);
-      setLoading(false);
-    })
-    .catch(function(e){showError('Error: '+e.message);});
-  }
-
-  function confirm(){
-    if(!_parsed) return;
-    MATCHES.push(_parsed);
-    MATCHES.sort(function(a,b){return a.j-b.j;});
-    renderResumen(); renderProximos(); renderPartidos(); renderJugadores(); renderArbitros(); renderAnalisis();
-    document.getElementById('am-preview-card').style.display='none';
-    document.getElementById('am-success-card').style.display='';
-    document.getElementById('am-code-out').textContent=',\n\n'+_serialized;
-  }
-
-  function cancel(){
-    document.getElementById('am-preview-card').style.display='none';
-    _parsed=null; _serialized=null;
-  }
-
-  function reset(){
-    document.getElementById('am-success-card').style.display='none';
-    document.getElementById('am-text').value='';
-    _parsed=null; _serialized=null;
-  }
-
-  function download(){
-    if(!_serialized) return;
-    var btn=document.getElementById('am-download-btn');
-    btn.disabled=true; btn.textContent='⏳ Preparando…';
-    fetch(location.href)
-      .then(function(r){return r.text();})
-      .then(function(src){
-        var start=src.indexOf('var MATCHES = [');
-        if(start===-1) throw new Error('"var MATCHES = [" no encontrado');
-        var depth=0,i=start;
-        while(i<src.length){
-          if(src[i]==='[') depth++;
-          else if(src[i]===']'){depth--;if(depth===0) break;}
-          i++;
-        }
-        var patched=src.slice(0,i)+',\n\n'+_serialized+'\n'+src.slice(i);
-        var a=document.createElement('a');
-        a.href=URL.createObjectURL(new Blob([patched],{type:'text/html'}));
-        a.download='v2.html'; a.click();
-        URL.revokeObjectURL(a.href);
-        btn.disabled=false; btn.textContent='✅ Descargado';
-      })
-      .catch(function(){
-        btn.disabled=false; btn.textContent='⬇️ Descargar v2.html actualizado';
-        alert('El navegador bloqueó la lectura del archivo (restricción file://). Copia el código de abajo manualmente.');
-      });
-  }
-
-  return{init:init,saveKey:saveKey,parse:parse,confirm:confirm,cancel:cancel,reset:reset,download:download};
-})();
-
-AmForm.init();
 </script>
 </body>
 </html>
