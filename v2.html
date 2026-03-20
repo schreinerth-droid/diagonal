@@ -194,8 +194,6 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
 </div>
 
 <div id="jugadores" class="sec">
-  <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">Goles por tramo</span><span style="font-size:10px;font-weight:600"><span style="color:var(--accent)">■ GF</span> &nbsp;<span style="color:var(--loss)">■ GC</span></span></div><div style="overflow-x:auto;padding:8px 14px 4px"><svg id="tramo-chart" viewBox="0 0 600 160" style="width:100%;min-width:280px;height:auto;display:block"></svg></div></div>
-  <div style="height:12px"></div>
   <div class="card" style="margin-bottom:0"><div style="overflow-x:auto">
     <table class="ptbl"><thead><tr>
       <th>Jugador</th><th class="r">⚽</th><th class="r">🟨</th><th class="r">🟥</th><th class="r">Tit.</th><th class="r">Sup.</th><th class="r">Part.</th>
@@ -218,6 +216,7 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
     <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">Rachas máximas</span></div><div class="card-body" id="anl-rachas"></div></div>
     <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">Disciplina</span></div><div class="card-body" id="anl-disc"></div></div>
   </div>
+  <div class="card"><div class="card-head"><span class="card-title">Goles por tramo</span><span style="font-size:10px;font-weight:600"><span style="color:var(--accent)">■ GF</span> &nbsp;<span style="color:var(--loss)">■ GC</span></span></div><div style="overflow-x:auto;padding:8px 14px 4px"><svg id="tramo-chart" viewBox="0 0 600 160" style="width:100%;min-width:280px;height:auto;display:block"></svg></div></div>
   <div class="card"><div class="card-head"><span class="card-title">🔄 Remontadas y ventajas perdidas</span></div><div class="card-body" id="anl-remont"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">📊 1ª vs 2ª Vuelta</span></div><div class="card-body" id="anl-vueltas"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">📅 Rendimiento mensual</span></div><div style="overflow-x:auto" id="anl-meses"></div></div>
@@ -565,25 +564,6 @@ function renderPartidos(){
 }
 
 function renderJugadores(){
-  var tGF=[0,0,0,0,0,0],tGC=[0,0,0,0,0,0];
-  MATCHES.forEach(function(m){(m.goals||[]).forEach(function(g){var t=tramo(parseInt(g.min,10)||0);if(g.type==='gf')tGF[t]++;else tGC[t]++;});});
-  var labels=["1-15'","16-30'","31-45'","46-60'","61-75'","76-90'"];
-  var tW=600,tH=160,tlpx=30,trpx=8,ttpy=10,tbpy=22,tChH=tH-ttpy-tbpy;
-  var tmx=Math.max.apply(null,tGF.concat(tGC).concat([1]));
-  var tgW=(tW-tlpx-trpx)/6,tbW=tgW*0.28,tgap=3,tbase=ttpy+tChH;
-  var tch='<line x1="'+tlpx+'" y1="'+tbase+'" x2="'+(tW-trpx)+'" y2="'+tbase+'" stroke="#e2ddd7" stroke-width="1.5"/>';
-  for(var tv=1;tv<=tmx;tv++){var tgy=(ttpy+tChH-(tv/tmx)*tChH).toFixed(1);tch+='<line x1="'+tlpx+'" y1="'+tgy+'" x2="'+(tW-trpx)+'" y2="'+tgy+'" stroke="#e2ddd7" stroke-width="0.6"/><text x="'+(tlpx-4)+'" y="'+(parseFloat(tgy)+3).toFixed(1)+'" text-anchor="end" fill="#9a9690" font-size="9">'+tv+'</text>';}
-  for(var ti=0;ti<6;ti++){
-    var tcx=(tlpx+(ti+0.5)*tgW).toFixed(1);
-    var tgfH=tGF[ti]>0?((tGF[ti]/tmx)*tChH).toFixed(1):0;
-    var tgcH=tGC[ti]>0?((tGC[ti]/tmx)*tChH).toFixed(1):0;
-    var tgfX=(tlpx+(ti+0.5)*tgW-tgap/2-tbW).toFixed(1);
-    var tgcX=(tlpx+(ti+0.5)*tgW+tgap/2).toFixed(1);
-    if(tGF[ti]>0){tch+='<rect x="'+tgfX+'" y="'+(tbase-parseFloat(tgfH)).toFixed(1)+'" width="'+tbW.toFixed(1)+'" height="'+tgfH+'" fill="var(--accent)" opacity=".85" rx="2"/>';tch+='<text x="'+(parseFloat(tgfX)+tbW/2).toFixed(1)+'" y="'+(tbase-parseFloat(tgfH)-3).toFixed(1)+'" text-anchor="middle" fill="var(--accent)" font-size="9" font-weight="700">'+tGF[ti]+'</text>';}
-    if(tGC[ti]>0){tch+='<rect x="'+tgcX+'" y="'+(tbase-parseFloat(tgcH)).toFixed(1)+'" width="'+tbW.toFixed(1)+'" height="'+tgcH+'" fill="var(--loss)" opacity=".55" rx="2"/>';tch+='<text x="'+(parseFloat(tgcX)+tbW/2).toFixed(1)+'" y="'+(tbase-parseFloat(tgcH)-3).toFixed(1)+'" text-anchor="middle" fill="var(--loss)" font-size="9" font-weight="700">'+tGC[ti]+'</text>';}
-    tch+='<text x="'+tcx+'" y="'+(tH-4)+'" text-anchor="middle" fill="#9a9690" font-size="9">'+labels[ti]+'</text>';
-  }
-  document.getElementById('tramo-chart').innerHTML=tch;
   var players=buildPlayers();
   document.getElementById('players-body').innerHTML=players.sort(function(a,b){return b.goals-a.goals||(b.tit+b.sup)-(a.tit+a.sup);}).map(function(p){
     var t=p.tit+p.sup;
@@ -648,6 +628,25 @@ function renderAnalisis(){
     '</tbody></table>';
   document.getElementById('anl-rachas').innerHTML=arow('Victorias consecutivas','<span style="color:var(--win)">'+maxStreak(pl,function(m){return m.res==='G';})+'</span>')+arow('Sin perder consecutivos','<span style="color:var(--draw)">'+maxStreak(pl,function(m){return m.res!=='P';})+'</span>')+arow('Sin ganar consecutivos','<span style="color:var(--loss)">'+maxStreak(pl,function(m){return m.res!=='G';})+'</span>');
   document.getElementById('anl-disc').innerHTML=arow('🟨 Amarillas total','<span style="color:var(--yellow)">'+totY+'</span>')+arow('🟥 Rojas total','<span style="color:var(--loss)">'+totR+'</span>')+arow('Media amarillas/partido',''+(totY/n).toFixed(2));
+  var tGF=[0,0,0,0,0,0],tGC=[0,0,0,0,0,0];
+  pl.forEach(function(m){(m.goals||[]).forEach(function(g){var t=tramo(parseInt(g.min,10)||0);if(g.type==='gf')tGF[t]++;else tGC[t]++;});});
+  var labels=["1-15'","16-30'","31-45'","46-60'","61-75'","76-90'"];
+  var tW=600,tH=160,tlpx=30,trpx=8,ttpy=10,tbpy=22,tChH=tH-ttpy-tbpy;
+  var tmx=Math.max.apply(null,tGF.concat(tGC).concat([1]));
+  var tgW=(tW-tlpx-trpx)/6,tbW=tgW*0.28,tgap=3,tbase=ttpy+tChH;
+  var tch='<line x1="'+tlpx+'" y1="'+tbase+'" x2="'+(tW-trpx)+'" y2="'+tbase+'" stroke="#e2ddd7" stroke-width="1.5"/>';
+  for(var tv=1;tv<=tmx;tv++){var tgy=(ttpy+tChH-(tv/tmx)*tChH).toFixed(1);tch+='<line x1="'+tlpx+'" y1="'+tgy+'" x2="'+(tW-trpx)+'" y2="'+tgy+'" stroke="#e2ddd7" stroke-width="0.6"/><text x="'+(tlpx-4)+'" y="'+(parseFloat(tgy)+3).toFixed(1)+'" text-anchor="end" fill="#9a9690" font-size="9">'+tv+'</text>';}
+  for(var ti=0;ti<6;ti++){
+    var tcx=(tlpx+(ti+0.5)*tgW).toFixed(1);
+    var tgfH=tGF[ti]>0?((tGF[ti]/tmx)*tChH).toFixed(1):0;
+    var tgcH=tGC[ti]>0?((tGC[ti]/tmx)*tChH).toFixed(1):0;
+    var tgfX=(tlpx+(ti+0.5)*tgW-tgap/2-tbW).toFixed(1);
+    var tgcX=(tlpx+(ti+0.5)*tgW+tgap/2).toFixed(1);
+    if(tGF[ti]>0){tch+='<rect x="'+tgfX+'" y="'+(tbase-parseFloat(tgfH)).toFixed(1)+'" width="'+tbW.toFixed(1)+'" height="'+tgfH+'" fill="var(--accent)" opacity=".85" rx="2"/>';tch+='<text x="'+(parseFloat(tgfX)+tbW/2).toFixed(1)+'" y="'+(tbase-parseFloat(tgfH)-3).toFixed(1)+'" text-anchor="middle" fill="var(--accent)" font-size="9" font-weight="700">'+tGF[ti]+'</text>';}
+    if(tGC[ti]>0){tch+='<rect x="'+tgcX+'" y="'+(tbase-parseFloat(tgcH)).toFixed(1)+'" width="'+tbW.toFixed(1)+'" height="'+tgcH+'" fill="var(--loss)" opacity=".55" rx="2"/>';tch+='<text x="'+(parseFloat(tgcX)+tbW/2).toFixed(1)+'" y="'+(tbase-parseFloat(tgcH)-3).toFixed(1)+'" text-anchor="middle" fill="var(--loss)" font-size="9" font-weight="700">'+tGC[ti]+'</text>';}
+    tch+='<text x="'+tcx+'" y="'+(tH-4)+'" text-anchor="middle" fill="#9a9690" font-size="9">'+labels[ti]+'</text>';
+  }
+  document.getElementById('tramo-chart').innerHTML=tch;
   var remAll=[],vpAll=[];
   pl.forEach(function(m){
     var gs=(m.goals||[]).slice().sort(function(a,b){return(a.min||0)-(b.min||0);});
