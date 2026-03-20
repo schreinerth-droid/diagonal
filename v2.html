@@ -60,7 +60,8 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
 .tbl td.tl{text-align:left}.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:var(--bg)}
 .tbl tr.diag td{background:var(--accent-light)}.tbl tr.diag td.tl{font-weight:700;color:var(--accent)}
 .pos{width:20px;height:20px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
-.pos-up{background:#dbeafe;color:#1e40af}.pos-dn{background:var(--loss-bg);color:var(--loss)}.pos-mid{background:var(--surface2);color:var(--ink3)}
+.pos-champ{background:#fef3c7;color:#92400e}.pos-dn{background:var(--loss-bg);color:var(--loss)}.pos-mid{background:var(--surface2);color:var(--ink3)}
+.tbl tr.zone-champ td:first-child{box-shadow:inset 3px 0 0 #d97706}.tbl tr.zone-dn td:first-child{box-shadow:inset 3px 0 0 var(--loss)}
 .pts-b{font-weight:700;color:var(--accent)}
 .last5{display:flex;gap:2px;justify-content:center}
 .l5d{width:14px;height:14px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700}
@@ -413,24 +414,24 @@ MATCHES.sort(function(a,b){return a.j-b.j;});
 // 3. CLASIFICACIÓN (estática J21)
 // ═══════════════════════════════════════════════════
 var CLAS = {
-  updated:'J21 · 12 mar 2026',
+  updated:'J21 · 20 mar 2026',
   teams:[
-    {n:'Escola de Futbol Premier Barcelona A',pj:20,g:17,e:2,p:1,gf:67,gc:21,pts:53,l5:['G','G','G','G','N']},
-    {n:"L'Hospitalet, Centre Esports C",pj:20,g:13,e:6,p:1,gf:78,gc:17,pts:45,l5:['E','G','G','G','N']},
-    {n:'Pª Barc. Anguera C',pj:20,g:13,e:4,p:3,gf:57,gc:19,pts:43,l5:['P','G','E','P','N']},
-    {n:'APA Poble Sec, CE. A',pj:20,g:13,e:2,p:5,gf:54,gc:22,pts:41,l5:['G','E','G','G','N']},
-    {n:'Escola Collblanc-Torrassa, CE A',pj:20,g:11,e:3,p:6,gf:59,gc:39,pts:36,l5:['E','G','E','P','N']},
-    {n:'Europa, CE. C',pj:20,g:10,e:5,p:5,gf:44,gc:30,pts:35,l5:['P','E','G','G','N']},
-    {n:'Escola F Angel Pedraza A',pj:20,g:10,e:3,p:7,gf:46,gc:43,pts:33,l5:['E','E','E','G','N']},
+    {n:'Escola de Futbol Premier Barcelona A',pj:21,g:17,e:3,p:1,gf:68,gc:22,pts:54,l5:['G','G','G','G','N']},
+    {n:"L'Hospitalet, Centre Esports C",pj:21,g:13,e:7,p:1,gf:79,gc:18,pts:46,l5:['E','G','G','G','N']},
+    {n:'Pª Barc. Anguera C',pj:21,g:14,e:4,p:3,gf:62,gc:20,pts:46,l5:['P','G','E','P','N']},
+    {n:'APA Poble Sec, CE. A',pj:21,g:14,e:2,p:5,gf:57,gc:23,pts:44,l5:['G','E','G','G','N']},
+    {n:'Escola Collblanc-Torrassa, CE A',pj:21,g:12,e:3,p:6,gf:64,gc:39,pts:39,l5:['E','G','E','P','N']},
+    {n:'Europa, CE. C',pj:21,g:10,e:5,p:6,gf:45,gc:32,pts:35,l5:['P','E','G','G','N']},
+    {n:'Escola F Angel Pedraza A',pj:21,g:10,e:3,p:8,gf:47,gc:46,pts:33,l5:['E','E','E','G','N']},
     {n:'Diagonal Club Esp. A',pj:21,g:10,e:2,p:9,gf:26,gc:26,pts:32,l5:['G','G','P','G','G']},
-    {n:'Sarrià, CP. B',pj:20,g:8,e:5,p:7,gf:39,gc:48,pts:29,l5:['G','P','E','G','N']},
-    {n:'Penya Barc. Collblanc Sants, AE A',pj:20,g:7,e:6,p:7,gf:36,gc:32,pts:27,l5:['P','P','G','G','N']},
-    {n:'Can Vidalet, CF. A',pj:20,g:7,e:3,p:10,gf:21,gc:32,pts:24,l5:['G','P','G','P','N']},
+    {n:'Penya Barc. Collblanc Sants, AE A',pj:21,g:8,e:6,p:7,gf:38,gc:33,pts:30,l5:['P','P','G','G','N']},
+    {n:'Sarrià, CP. B',pj:21,g:8,e:5,p:8,gf:40,gc:53,pts:29,l5:['G','P','E','G','N']},
+    {n:'Can Vidalet, CF. A',pj:21,g:8,e:3,p:10,gf:23,gc:32,pts:27,l5:['G','P','G','P','N']},
     {n:'Sant Ignasi CE. A',pj:21,g:6,e:3,p:12,gf:31,gc:52,pts:21,l5:['P','G','P','P','P']},
-    {n:"Fundació Academia F. L'Hospitalet B",pj:20,g:3,e:5,p:12,gf:13,gc:32,pts:14,l5:['P','P','P','P','N']},
-    {n:'Hospitalense, AT.C. A',pj:20,g:4,e:1,p:15,gf:29,gc:61,pts:13,l5:['P','G','P','P','N']},
-    {n:'Les Corts de Barcelona Club Esp. A',pj:20,g:3,e:2,p:15,gf:27,gc:86,pts:11,l5:['G','P','P','P','N']},
-    {n:'Sants, UE. B',pj:20,g:0,e:0,p:20,gf:9,gc:76,pts:0,l5:['P','P','P','P','N']}
+    {n:"Fundació Academia F. L'Hospitalet B",pj:21,g:4,e:5,p:12,gf:15,gc:33,pts:17,l5:['P','P','P','P','N']},
+    {n:'Hospitalense, AT.C. A',pj:21,g:4,e:1,p:16,gf:30,gc:63,pts:13,l5:['P','G','P','P','N']},
+    {n:'Les Corts de Barcelona Club Esp. A',pj:21,g:3,e:2,p:16,gf:27,gc:88,pts:11,l5:['G','P','P','P','N']},
+    {n:'Sants, UE. B',pj:21,g:0,e:0,p:21,gf:9,gc:81,pts:0,l5:['P','P','P','P','N']}
   ]
 };
 
@@ -535,10 +536,11 @@ function renderClasificacion(){
   document.getElementById('clas-updated').textContent=CLAS.updated;
   var sorted=CLAS.teams.slice().sort(function(a,b){if(b.pts!==a.pts)return b.pts-a.pts;var da=a.gf-a.gc,db=b.gf-b.gc;if(db!==da)return db-da;return b.gf-a.gf;});
   document.getElementById('clas-body').innerHTML=sorted.map(function(t,i){
-    var pos=i+1,dif=t.gf-t.gc,pc=pos<=2?'pos-up':pos>=15?'pos-dn':'pos-mid';
+    var pos=i+1,dif=t.gf-t.gc,pc=pos===1?'pos-champ':pos>=13?'pos-dn':'pos-mid';
     var isDiag=t.n.toUpperCase().indexOf('DIAGONAL')!==-1;
+    var zc=pos===1?' zone-champ':pos>=13?' zone-dn':'';
     var dots=(t.l5||[]).map(function(r){return r==='N'?'<div class="l5d l5-N">–</div>':'<div class="l5d l5-'+r+'">'+r+'</div>';}).join('');
-    return'<tr'+(isDiag?' class="diag"':'')+'><td><span class="pos '+pc+'">'+pos+'</span></td><td class="tl">'+(isDiag?'<strong>'+t.n+'</strong>':t.n)+'</td><td class="pts-b">'+t.pts+'</td><td>'+t.pj+'</td><td>'+t.g+'</td><td>'+t.e+'</td><td>'+t.p+'</td><td>'+t.gf+'</td><td>'+t.gc+'</td><td style="font-weight:600;color:'+(dif>=0?'var(--win)':'var(--loss)')+'">'+(dif>0?'+':'')+dif+'</td><td><div class="last5">'+dots+'</div></td></tr>';
+    return'<tr class="'+(isDiag?'diag':'')+zc+'"><td><span class="pos '+pc+'">'+pos+'</span></td><td class="tl">'+(isDiag?'<strong>'+t.n+'</strong>':t.n)+'</td><td class="pts-b">'+t.pts+'</td><td>'+t.pj+'</td><td>'+t.g+'</td><td>'+t.e+'</td><td>'+t.p+'</td><td>'+t.gf+'</td><td>'+t.gc+'</td><td style="font-weight:600;color:'+(dif>=0?'var(--win)':'var(--loss)')+'">'+(dif>0?'+':'')+dif+'</td><td><div class="last5">'+dots+'</div></td></tr>';
   }).join('');
 }
 

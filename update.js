@@ -334,57 +334,58 @@ async function main() {
   console.log(`    Jornadas cargadas : ${[...played].sort((a, b) => a - b).join(', ')}`);
   console.log(`    Jugadores en dict : ${Object.keys(PLAYERS).length}`);
 
+  // ── Actas ────────────────────────────────────────────────────────
   const pending = UPCOMING_URLS.filter(u => !played.has(u.j));
-  if (!pending.length) {
-    console.log('\n✅  Todas las jornadas ya están cargadas.');
-    return;
-  }
-  console.log(`\n🔍  Jornadas pendientes: ${pending.map(u => 'J' + u.j).join(', ')}\n`);
-
   const newMatches = [];
 
-  for (const { j, loc, url } of pending) {
-    process.stdout.write(`⬇️   J${j} (${loc === 'C' ? 'casa' : 'fuera'})  `);
+  if (!pending.length) {
+    console.log('\n✅  Todas las jornadas ya están cargadas.');
+  } else {
+    console.log(`\n🔍  Jornadas pendientes: ${pending.map(u => 'J' + u.j).join(', ')}\n`);
 
-    let res;
-    try { res = await get(url); }
-    catch (e) { console.log(`❌  Error: ${e.message}`); continue; }
+    for (const { j, loc, url } of pending) {
+      process.stdout.write(`⬇️   J${j} (${loc === 'C' ? 'casa' : 'fuera'})  `);
 
-    if (res.status !== 200) { console.log(`❌  HTTP ${res.status}`); continue; }
-    if (DEBUG) fs.writeFileSync(path.join(__dirname, 'debug', `j${j}.html`), res.html);
+      let res;
+      try { res = await get(url); }
+      catch (e) { console.log(`❌  Error: ${e.message}`); continue; }
 
-    if (!isPublished(res.html)) { console.log('⏳  Sin publicar todavía'); continue; }
+      if (res.status !== 200) { console.log(`❌  HTTP ${res.status}`); continue; }
+      if (DEBUG) fs.writeFileSync(path.join(__dirname, 'debug', `j${j}.html`), res.html);
 
-    const match = parseActa(res.html, loc, PLAYERS);
-    if (!match) { console.log('⚠️   No se pudo parsear'); continue; }
+      if (!isPublished(res.html)) { console.log('⏳  Sin publicar todavía'); continue; }
 
-    console.log(`✅  ${match.home} ${match.gf}–${match.gc} ${match.away}  (${match.res})`);
-    if (match.titulars.length) console.log(`     Titulares : ${match.titulars.map(p => p.id).join(', ')}`);
-    if (match.suplents.length) console.log(`     Suplentes : ${match.suplents.map(p => p.id).join(', ')}`);
-    if (match.goals.length)    console.log(`     Goles     : ${match.goals.map(g => `${g.min}' ${g.type}${g.playerId ? ' (' + g.playerId + ')' : ''}`).join(', ')}`);
-    if (match.yellows.length)  console.log(`     Amarillas : ${match.yellows.map(y => y.playerId || '?').join(', ')}`);
-    if (match.reds.length)     console.log(`     Rojas     : ${match.reds.map(r => r.playerId || '?').join(', ')}`);
+      const match = parseActa(res.html, loc, PLAYERS);
+      if (!match) { console.log('⚠️   No se pudo parsear'); continue; }
 
-    newMatches.push(match);
+      console.log(`✅  ${match.home} ${match.gf}–${match.gc} ${match.away}  (${match.res})`);
+      if (match.titulars.length) console.log(`     Titulares : ${match.titulars.map(p => p.id).join(', ')}`);
+      if (match.suplents.length) console.log(`     Suplentes : ${match.suplents.map(p => p.id).join(', ')}`);
+      if (match.goals.length)    console.log(`     Goles     : ${match.goals.map(g => `${g.min}' ${g.type}${g.playerId ? ' (' + g.playerId + ')' : ''}`).join(', ')}`);
+      if (match.yellows.length)  console.log(`     Amarillas : ${match.yellows.map(y => y.playerId || '?').join(', ')}`);
+      if (match.reds.length)     console.log(`     Rojas     : ${match.reds.map(r => r.playerId || '?').join(', ')}`);
+
+      newMatches.push(match);
+    }
   }
 
   console.log('');
 
   if (!newMatches.length) {
-    console.log('ℹ️   No hay actas nuevas publicadas. Vuelve a ejecutar después del partido.');
+    console.log('ℹ️   Sin actas nuevas. Vuelve a ejecutar después del partido.');
     return;
   }
 
   if (DRY_RUN) {
-    console.log('🔍  DRY RUN — se añadirían:');
+    console.log('🔍  DRY RUN — actas que se añadirían:');
     newMatches.forEach(m => console.log(`    J${m.j}  ${m.date}  ${m.home} ${m.gf}–${m.gc} ${m.away}`));
     console.log('\nEjecuta sin --dry-run para aplicar los cambios.');
     return;
   }
 
-  console.log(`✏️   Actualizando v2.html con ${newMatches.length} partido(s) nuevo(s)...`);
+  console.log(`✏️   Añadiendo ${newMatches.length} partido(s) nuevo(s)...`);
   fs.writeFileSync(HTML_FILE, patchV2(raw, newMatches), 'utf8');
-  console.log('✅  ¡Hecho! Recuerda actualizar también CLAS y UPCOMING si procede.');
+  console.log('✅  ¡Hecho! Recuerda actualizar CLAS y UPCOMING si procede.');
 }
 
 main().catch(e => {
