@@ -646,32 +646,48 @@ function renderAnalisis(){
     '</tbody></table>';
   document.getElementById('anl-rachas').innerHTML=arow('Victorias consecutivas','<span style="color:var(--win)">'+maxStreak(pl,function(m){return m.res==='G';})+'</span>')+arow('Sin perder consecutivos','<span style="color:var(--draw)">'+maxStreak(pl,function(m){return m.res!=='P';})+'</span>')+arow('Sin ganar consecutivos','<span style="color:var(--loss)">'+maxStreak(pl,function(m){return m.res!=='G';})+'</span>');
   document.getElementById('anl-disc').innerHTML=arow('🟨 Amarillas total','<span style="color:var(--yellow)">'+totY+'</span>')+arow('🟥 Rojas total','<span style="color:var(--loss)">'+totR+'</span>')+arow('Media amarillas/partido',''+(totY/n).toFixed(2));
-  var remTotal=0,rem=0,remG=0,remD=0,vpTotal=0,vp=0,vpD=0,vpP=0;
+  var remAll=[],vpAll=[];
   pl.forEach(function(m){
     var gs=(m.goals||[]).slice().sort(function(a,b){return(a.min||0)-(b.min||0);});
     var first=gs[0];
     if(!first)return;
-    if(first.type==='gc'){remTotal++;if(m.res==='G'){rem++;remG++;}else if(m.res==='E'){rem++;remD++;}}
-    else if(first.type==='gf'){vpTotal++;if(m.res==='P'){vp++;vpP++;}else if(m.res==='E'){vp++;vpD++;}}
+    if(first.type==='gc')remAll.push(m);
+    else if(first.type==='gf')vpAll.push(m);
   });
-  var remPct=remTotal>0?Math.round(rem/remTotal*100):0;
-  var vpPct=vpTotal>0?Math.round(vp/vpTotal*100):0;
-  function cbBlock(lbl,sub,cnt,total,pct,winColor,dLine){
-    var hasCnt=cnt>0;
-    var bg=hasCnt?'background:var('+winColor+'-bg);border:1px solid var('+winColor+')':'background:var(--surface2);border:1px solid var(--border)';
-    var tc=hasCnt?'color:var('+winColor+')':'color:var(--ink3)';
-    return'<div style="'+bg+';border-radius:var(--r);padding:14px;text-align:center">'+
-      '<div style="font-size:10px;font-weight:700;'+tc+';text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">'+lbl+'</div>'+
-      '<div style="font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">'+sub+'</div>'+
-      '<div style="font-size:26px;font-weight:700;line-height:1;'+tc+'">'+cnt+'<span style="font-size:12px;font-weight:400;color:var(--ink3)"> / '+total+'</span></div>'+
-      '<div style="font-size:13px;font-weight:700;'+tc+';margin:5px 0">'+pct+'%</div>'+
-      (total>0?'<div style="font-size:10px;color:var(--ink3);margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">'+dLine+'</div>':'')+
+  var remCount=remAll.filter(function(m){return m.res!=='P';}).length;
+  var vpLost=vpAll.filter(function(m){return m.res!=='G';}).length;
+  var remPct=remAll.length>0?Math.round(remCount/remAll.length*100):0;
+  var vpPct=vpAll.length>0?Math.round(vpLost/vpAll.length*100):0;
+  function rmRival(m){var s=m.loc==='C'?m.away:m.home;return s.length>18?s.slice(0,17)+'…':s;}
+  function rmRow(m,okFn){
+    var ok=okFn(m);
+    var bg=ok?'background:var(--win-bg)':'background:var(--loss-bg)';
+    var rc={G:'V',E:'E',P:'D'}[m.res];
+    var rc_c={G:'var(--win)',E:'var(--draw)',P:'var(--loss)'}[m.res];
+    return'<div style="'+bg+';display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:3px;margin-bottom:3px">'+
+      '<span style="font-size:10px;font-weight:700;color:var(--ink3);width:18px;flex-shrink:0">J'+m.j+'</span>'+
+      '<span style="font-size:10px;font-weight:700;color:'+rc_c+';width:10px;flex-shrink:0">'+rc+'</span>'+
+      '<span style="font-size:11px;font-weight:600;width:26px;text-align:center;flex-shrink:0">'+m.gf+'–'+m.gc+'</span>'+
+      '<span style="font-size:10px;color:var(--ink2);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+rmRival(m)+'</span>'+
+    '</div>';
+  }
+  function rmBlock(lbl,sub,cnt,total,pct,color,matches,okFn){
+    var tc='color:var('+color+')';
+    return'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px">'+
+      '<div style="font-size:10px;font-weight:700;'+tc+';text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">'+lbl+'</div>'+
+      '<div style="font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">'+sub+'</div>'+
+      '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)">'+
+        '<span style="font-size:22px;font-weight:700;line-height:1;'+tc+'">'+cnt+'</span>'+
+        '<span style="font-size:11px;color:var(--ink3)">/ '+total+'</span>'+
+        '<span style="font-size:13px;font-weight:700;'+tc+'">'+pct+'%</span>'+
+      '</div>'+
+      (matches.length>0?matches.map(function(m){return rmRow(m,okFn);}).join(''):'<div style="font-size:10px;color:var(--ink3);text-align:center;padding:6px">—</div>')+
     '</div>';
   }
   document.getElementById('anl-remont').innerHTML=
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
-      cbBlock('Remontadas','concedió 1er gol',rem,remTotal,remPct,'--win','V: '+remG+' &nbsp;·&nbsp; E: '+remD)+
-      cbBlock('Ventajas perdidas','marcó 1er gol',vp,vpTotal,vpPct,'--loss','E: '+vpD+' &nbsp;·&nbsp; D: '+vpP)+
+      rmBlock('Remontadas','concedió 1er gol',remCount,remAll.length,remPct,'--win',remAll,function(m){return m.res!=='P';})+
+      rmBlock('Ventajas perdidas','marcó 1er gol',vpLost,vpAll.length,vpPct,'--loss',vpAll,function(m){return m.res==='G';})+
     '</div>';
   var pv=pl.filter(function(m){return m.j<=14;});
   var sv=pl.filter(function(m){return m.j>14;});
