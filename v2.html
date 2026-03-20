@@ -593,7 +593,7 @@ function renderJugadores(){
 
 function renderArbitros(){
   var rm={};
-  MATCHES.forEach(function(m){if(!m.ref)return;if(!rm[m.ref])rm[m.ref]={name:m.ref,del:m.refDel||'',matches:[]};rm[m.ref].matches.push({j:m.j,res:m.res});});
+  MATCHES.forEach(function(m){if(!m.ref)return;if(!rm[m.ref])rm[m.ref]={name:m.ref,del:m.refDel||'',matches:[],yellows:0};rm[m.ref].matches.push({j:m.j,res:m.res});rm[m.ref].yellows+=(m.yellows||[]).length;});
   var refs=Object.keys(rm).map(function(k){return rm[k];});
   function sc(r){return sum(r.matches,function(p){return p.res==='G'?1:p.res==='P'?-1:0;});}
   document.getElementById('ref-stats').innerHTML=stCard(refs.length,'Distintos','var(--accent)')+stCard(refs.filter(function(r){return r.matches.length>1;}).length,'Repetidos','')+stCard(refs.filter(function(r){return sc(r)>0;}).length,'Favorables','var(--win)')+stCard(refs.filter(function(r){return sc(r)<0;}).length,'Desfavorables','var(--loss)');
@@ -601,7 +601,9 @@ function renderArbitros(){
     var s=sc(r),bc=s>0?'rb-fav':s<0?'rb-des':'rb-neu',bt=s>0?'Favorable':s<0?'Desfavorable':'Neutral';
     var rep=r.matches.length>1?'<span style="font-size:10px;font-weight:700;background:var(--yellow-bg);color:var(--yellow);padding:2px 7px;border-radius:3px;margin-left:6px">×'+r.matches.length+'</span>':'';
     var dots=r.matches.map(function(p){return'<div class="rdot res-'+p.res+'">'+rl(p.res)+'</div>';}).join('');
-    return'<div class="ref-row"><div class="ref-name">'+r.name+rep+'<div class="ref-sub">'+r.del+' · J'+r.matches.map(function(p){return p.j;}).join(', J')+'</div></div><div class="rdots">'+dots+'</div><span class="ref-badge '+bc+'">'+bt+'</span></div>';
+    var avgY=(r.yellows/r.matches.length).toFixed(1);
+    var ystat='<span style="font-size:10px;font-weight:700;color:var(--yellow);background:var(--yellow-bg);padding:2px 6px;border-radius:3px;margin-left:5px">🟨 '+avgY+'</span>';
+    return'<div class="ref-row"><div class="ref-name">'+r.name+rep+'<div class="ref-sub">'+r.del+' · J'+r.matches.map(function(p){return p.j;}).join(', J')+'</div></div><div class="rdots">'+dots+'</div><span class="ref-badge '+bc+'">'+bt+'</span>'+ystat+'</div>';
   }).join('');
 }
 
