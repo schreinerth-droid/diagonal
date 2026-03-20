@@ -451,7 +451,7 @@ var UPCOMING=[
 function sum(a,f){return a.reduce(function(s,x){return s+f(x);},0);}
 function maxN(a){return a.reduce(function(x,y){return x>y?x:y;},0);}
 function maxStreak(arr,fn){var mx=0,c=0;arr.forEach(function(m){c=fn(m)?c+1:0;if(c>mx)mx=c;});return mx;}
-function tramo(m){if(m<=15)return 0;if(m<=30)return 1;if(m<=45)return 2;if(m<=60)return 3;if(m<=75)return 4;return 5;}
+function tramo(m){if(m<=12)return 0;if(m<=24)return 1;if(m<=35)return 2;if(m<=47)return 3;if(m<=59)return 4;return 5;}
 function rl(r){return{G:'V',E:'E',P:'D'}[r]||'?';}
 function arow(l,v){return'<div class="arow"><span class="arow-lbl">'+l+'</span><span class="arow-val">'+v+'</span></div>';}
 function stCard(v,l,c){return'<div class="stat-card"><div class="stat-v"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div><div class="stat-l">'+l+'</div></div>';}
@@ -630,7 +630,7 @@ function renderAnalisis(){
   document.getElementById('anl-disc').innerHTML=arow('🟨 Amarillas total','<span style="color:var(--yellow)">'+totY+'</span>')+arow('🟥 Rojas total','<span style="color:var(--loss)">'+totR+'</span>')+arow('Media amarillas/partido',''+(totY/n).toFixed(2));
   var tGF=[0,0,0,0,0,0],tGC=[0,0,0,0,0,0];
   pl.forEach(function(m){(m.goals||[]).forEach(function(g){var t=tramo(parseInt(g.min,10)||0);if(g.type==='gf')tGF[t]++;else tGC[t]++;});});
-  var labels=["1-15'","16-30'","31-45'","46-60'","61-75'","76-90'"];
+  var labels=["1-12'","13-24'","25-35'","36-47'","48-59'","60-70'"];
   var tW=600,tH=160,tlpx=30,trpx=8,ttpy=10,tbpy=22,tChH=tH-ttpy-tbpy;
   var tmx=Math.max.apply(null,tGF.concat(tGC).concat([1]));
   var tgW=(tW-tlpx-trpx)/6,tbW=tgW*0.28,tgap=3,tbase=ttpy+tChH;
