@@ -358,7 +358,9 @@ async function main() {
       const match = parseActa(res.html, loc, PLAYERS);
       if (!match) { console.log('⚠️   No se pudo parsear'); continue; }
 
-      console.log(`✅  ${match.home} ${match.gf}–${match.gc} ${match.away}  (${match.res})`);
+      const homeScore = match.loc === 'C' ? match.gf : match.gc;
+      const awayScore = match.loc === 'C' ? match.gc : match.gf;
+      console.log(`✅  ${match.home} ${homeScore}–${awayScore} ${match.away}  (${match.res})`);
       if (match.titulars.length) console.log(`     Titulares : ${match.titulars.map(p => p.id).join(', ')}`);
       if (match.suplents.length) console.log(`     Suplentes : ${match.suplents.map(p => p.id).join(', ')}`);
       if (match.goals.length)    console.log(`     Goles     : ${match.goals.map(g => `${g.min}' ${g.type}${g.playerId ? ' (' + g.playerId + ')' : ''}`).join(', ')}`);
