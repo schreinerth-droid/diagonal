@@ -222,6 +222,11 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
   <div class="card"><div class="card-head"><span class="card-title">📊 1ª vs 2ª Vuelta</span></div><div class="card-body" id="anl-vueltas"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">📅 Rendimiento mensual</span></div><div style="overflow-x:auto" id="anl-meses"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">📈 Proyección final</span></div><div class="card-body" id="anl-proy"></div></div>
+  <div class="card"><div class="card-head"><span class="card-title">👤 Rendimiento por jugador titular</span></div><div class="card-body" id="anl-impact"></div></div>
+  <div class="card"><div class="card-head"><span class="card-title">🗒️ Alineaciones titulares</span></div><div class="card-body" id="anl-xis"></div></div>
+  <div class="card"><div class="card-head"><span class="card-title">🧤 Portero y resultado</span></div><div class="card-body" id="anl-gk"></div></div>
+  <div class="card"><div class="card-head"><span class="card-title">🔄 Cambios en el XI</span></div><div class="card-body" id="anl-stab"></div></div>
+  <div class="card"><div class="card-head"><span class="card-title">❌ Impacto de ausencias</span></div><div class="card-body" id="anl-absent"></div></div>
 </div>
 
 </main>
@@ -775,6 +780,201 @@ function renderAnalisis(){
   }).join('');
   document.getElementById('anl-meses').innerHTML='<table class="tbl">'+mTh+'<tbody>'+mRows+'</tbody>'+'</table>';
   document.getElementById('anl-proy').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center"><div><div style="font-size:28px;font-weight:700;color:var(--accent)">'+proy+'</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Pts proyectados</div></div><div><div style="font-size:28px;font-weight:700">'+n+'</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Partidos cargados</div></div><div><div style="font-size:28px;font-weight:700;color:var(--ink3)">'+pend+'</div><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)">Pendientes</div></div></div><div style="font-size:10px;color:var(--ink3);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">Ritmo actual: '+(pts/n).toFixed(2)+' pts/partido</div>';
+
+  // ── Rendimiento por jugador titular ──────────────────────────────
+  function shortN(id){
+    var nm=PLAYERS[id]?PLAYERS[id].name:'';
+    if(!nm) return id;
+    var ci=nm.indexOf(',');
+    return ci<0 ? nm : nm.slice(ci+1).trim().split(' ')[0];
+  }
+  function recOf(arr){
+    var rw=arr.filter(function(m){return m.res==='G';}).length;
+    var rd=arr.filter(function(m){return m.res==='E';}).length;
+    var rl2=arr.filter(function(m){return m.res==='P';}).length;
+    return{w:rw,d:rd,l:rl2,pct:arr.length?Math.round(rw/arr.length*100):0};
+  }
+  var impMap={};
+  Object.keys(PLAYERS).forEach(function(pid){impMap[pid]={tit:[],bench:[]};});
+  pl.forEach(function(m){
+    var tids=(m.titulars||[]).map(function(p){return p.id;});
+    var sids=(m.suplents||[]).map(function(p){return p.id;});
+    Object.keys(impMap).forEach(function(pid){
+      if(tids.indexOf(pid)>=0) impMap[pid].tit.push(m);
+      else if(sids.indexOf(pid)>=0) impMap[pid].bench.push(m);
+    });
+  });
+  var impRows=Object.keys(impMap)
+    .map(function(pid){return{pid:pid,nm:shortN(pid),rt:recOf(impMap[pid].tit),rb:recOf(impMap[pid].bench),tit:impMap[pid].tit.length,bench:impMap[pid].bench.length};})
+    .filter(function(p){return p.tit>=1;})
+    .sort(function(a,b){return b.tit-a.tit;});
+  var th='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
+    '<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Jugador</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)" colspan="2">Titular</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--win)">V</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--draw)">E</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--loss)">D</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--accent)">%V</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Banco</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--accent)">%V</th>'+
+    '</tr></thead><tbody>'+
+    impRows.map(function(p,i){
+      var bg=i%2===0?'':'background:var(--surface2)';
+      var tc=p.rt.pct>=60?'color:var(--win)':p.rt.pct<=33?'color:var(--loss)':'';
+      var tc2=p.bench>0?(p.rb.pct>=60?'color:var(--win)':p.rb.pct<=33?'color:var(--loss)':''):'color:var(--ink3)';
+      return'<tr style="'+bg+'">'+
+        '<td style="padding:6px 6px;font-weight:600">'+p.nm+'</td>'+
+        '<td style="text-align:center;padding:6px" colspan="2">'+p.tit+'</td>'+
+        '<td style="text-align:center;padding:6px;color:var(--win);font-weight:700">'+p.rt.w+'</td>'+
+        '<td style="text-align:center;padding:6px;color:var(--draw);font-weight:700">'+p.rt.d+'</td>'+
+        '<td style="text-align:center;padding:6px;color:var(--loss);font-weight:700">'+p.rt.l+'</td>'+
+        '<td style="text-align:center;padding:6px;font-weight:700;'+tc+'">'+p.rt.pct+'%</td>'+
+        '<td style="text-align:center;padding:6px;color:var(--ink3)">'+p.bench+'</td>'+
+        '<td style="text-align:center;padding:6px;font-weight:700;'+tc2+'">'+(p.bench>0?p.rb.pct+'%':'—')+'</td>'+
+        '</tr>';
+    }).join('')+
+    '</tbody></table>';
+  document.getElementById('anl-impact').innerHTML=th;
+
+  // ── Alineaciones titulares ────────────────────────────────────────
+  var xiMap={};
+  pl.forEach(function(m){
+    var key=(m.titulars||[]).map(function(p){return p.id;}).sort().join(',');
+    if(!xiMap[key]) xiMap[key]={key:key,ms:[]};
+    xiMap[key].ms.push(m);
+  });
+  var xis=Object.keys(xiMap).map(function(k){return xiMap[k];}).sort(function(a,b){return b.ms.length-a.ms.length;});
+  var xiRepeated=xis.filter(function(x){return x.ms.length>1;});
+  var xiUnique=xis.filter(function(x){return x.ms.length===1;});
+  function xiBlock(x){
+    var r=recOf(x.ms);
+    var names=x.key.split(',').map(function(pid){return shortN(pid);}).join(' · ');
+    var tags=x.ms.map(function(m){
+      var c={G:'var(--win)',E:'var(--draw)',P:'var(--loss)'}[m.res];
+      return'<span style="display:inline-block;font-size:10px;font-weight:700;color:'+c+';border:1px solid '+c+';border-radius:3px;padding:1px 5px;margin:1px 2px">'+rl(m.res)+' J'+m.j+' '+m.gf+'–'+m.gc+'</span>';
+    }).join('');
+    var bg=r.w>r.l?'var(--win-bg)':r.l>r.w?'var(--loss-bg)':'var(--surface2)';
+    return'<div style="background:'+bg+';border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-bottom:8px">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'+
+        '<span style="font-size:11px;font-weight:700;background:var(--accent);color:#fff;border-radius:3px;padding:1px 6px">'+x.ms.length+'×</span>'+
+        '<span style="font-size:11px;color:var(--win);font-weight:700">'+r.w+'V</span>'+
+        '<span style="font-size:11px;color:var(--draw);font-weight:700">'+r.d+'E</span>'+
+        '<span style="font-size:11px;color:var(--loss);font-weight:700">'+r.l+'D</span>'+
+        '<span style="font-size:10px;font-weight:700;color:var(--accent)">'+r.pct+'%V</span>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--ink2);margin-bottom:6px;line-height:1.6">'+names+'</div>'+
+      '<div>'+tags+'</div>'+
+    '</div>';
+  }
+  var xiHtml='';
+  if(xiRepeated.length){
+    xiHtml+=xiRepeated.map(xiBlock).join('');
+  } else {
+    xiHtml+='<div style="font-size:11px;color:var(--ink3);padding:4px 0 8px">Ninguna alineación se ha repetido exactamente.</div>';
+  }
+  if(xiUnique.length){
+    xiHtml+='<div style="font-size:10px;color:var(--ink3);border-top:1px solid var(--border);padding-top:8px;margin-top:4px">'+
+      xiUnique.length+' alineaciones usadas una sola vez — '+
+      xiUnique.filter(function(x){return x.ms[0].res==='G';}).length+'V · '+
+      xiUnique.filter(function(x){return x.ms[0].res==='E';}).length+'E · '+
+      xiUnique.filter(function(x){return x.ms[0].res==='P';}).length+'D'+
+    '</div>';
+  }
+  document.getElementById('anl-xis').innerHTML=xiHtml;
+
+  // ── Portero y resultado ───────────────────────────────────────────
+  function gkRow(pid,i){
+    if(!impMap[pid]||!impMap[pid].tit.length) return '';
+    var ms=impMap[pid].tit;
+    var r=recOf(ms);
+    var gcpm=(sum(ms,function(m){return m.gc;})/ms.length).toFixed(1);
+    var bg=i%2===0?'':'background:var(--surface2)';
+    var tc=r.pct>=56?'color:var(--win)':r.pct<=33?'color:var(--loss)':'';
+    return'<tr style="'+bg+'">'+
+      '<td style="padding:6px;font-weight:600">'+shortN(pid)+'</td>'+
+      '<td style="text-align:center;padding:6px">'+ms.length+'</td>'+
+      '<td style="text-align:center;padding:6px;color:var(--win);font-weight:700">'+r.w+'</td>'+
+      '<td style="text-align:center;padding:6px;color:var(--draw);font-weight:700">'+r.d+'</td>'+
+      '<td style="text-align:center;padding:6px;color:var(--loss);font-weight:700">'+r.l+'</td>'+
+      '<td style="text-align:center;padding:6px;font-weight:700;'+tc+'">'+r.pct+'%</td>'+
+      '<td style="text-align:center;padding:6px;color:var(--loss)">'+gcpm+'</td>'+
+      '</tr>';
+  }
+  var gkThead='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
+    '<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Portero</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">PJ</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--win)">V</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--draw)">E</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--loss)">D</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--accent)">%V</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--loss)">GC/pdo</th>'+
+    '</tr></thead><tbody>';
+  document.getElementById('anl-gk').innerHTML=gkThead+['steven','jose','redon'].map(gkRow).join('')+'</tbody></table>';
+
+  // ── Cambios en el XI ──────────────────────────────────────────────
+  var pls=pl.slice().sort(function(a,b){return a.j-b.j;});
+  var stabBuckets=[{lbl:'0–2 cambios',ms:[]},{lbl:'3–5 cambios',ms:[]},{lbl:'6+ cambios',ms:[]}];
+  for(var si=1;si<pls.length;si++){
+    var prv=pls[si-1],cur=pls[si];
+    var prvIds=(prv.titulars||[]).map(function(p){return p.id;});
+    var curIds=(cur.titulars||[]).map(function(p){return p.id;});
+    var same=curIds.filter(function(id){return prvIds.indexOf(id)>=0;}).length;
+    var chg=11-same;
+    stabBuckets[chg<=2?0:chg<=5?1:2].ms.push(cur);
+  }
+  var stabThead='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
+    '<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Estabilidad</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">PJ</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--win)">V</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--draw)">E</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--loss)">D</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--accent)">%V</th>'+
+    '</tr></thead><tbody>';
+  var stabRows=stabBuckets.map(function(b,i){
+    if(!b.ms.length) return '';
+    var r=recOf(b.ms);
+    var bg=i%2===0?'':'background:var(--surface2)';
+    var tc=r.pct>=60?'color:var(--win)':r.pct<=33?'color:var(--loss)':'';
+    return'<tr style="'+bg+'">'+
+      '<td style="padding:6px;font-weight:600">'+b.lbl+'</td>'+
+      '<td style="text-align:center;padding:6px">'+b.ms.length+'</td>'+
+      '<td style="text-align:center;padding:6px;color:var(--win);font-weight:700">'+r.w+'</td>'+
+      '<td style="text-align:center;padding:6px;color:var(--draw);font-weight:700">'+r.d+'</td>'+
+      '<td style="text-align:center;padding:6px;color:var(--loss);font-weight:700">'+r.l+'</td>'+
+      '<td style="text-align:center;padding:6px;font-weight:700;'+tc+'">'+r.pct+'%</td>'+
+      '</tr>';
+  }).join('');
+  document.getElementById('anl-stab').innerHTML=stabThead+stabRows+'</tbody></table>'+
+    '<div style="font-size:10px;color:var(--ink3);margin-top:6px">J1 excluido (sin partido anterior). Cambios calculados sobre titulares.</div>';
+
+  // ── Impacto de ausencias ──────────────────────────────────────────
+  var absRows=impRows.filter(function(p){return p.tit>=8;}).map(function(p){
+    var absentMs=pl.filter(function(m){
+      return (m.titulars||[]).every(function(t){return t.id!==p.pid;})&&
+             (m.suplents||[]).every(function(t){return t.id!==p.pid;});
+    });
+    var ra=recOf(absentMs);
+    return{nm:p.nm,titPct:p.rt.pct,titN:p.tit,absPct:ra.pct,absN:absentMs.length,delta:p.rt.pct-ra.pct};
+  }).filter(function(r){return r.absN>=3;}).sort(function(a,b){return b.delta-a.delta;});
+  var absThead='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
+    '<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Jugador</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--accent)">%V titular</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">%V ausente</th>'+
+    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Δ</th>'+
+    '</tr></thead><tbody>';
+  var absBodyRows=absRows.map(function(p,i){
+    var bg=i%2===0?'':'background:var(--surface2)';
+    var dc=p.delta>10?'color:var(--win)':p.delta<-10?'color:var(--loss)':'color:var(--ink3)';
+    var sign=p.delta>0?'+':'';
+    return'<tr style="'+bg+'">'+
+      '<td style="padding:6px;font-weight:600">'+p.nm+'</td>'+
+      '<td style="text-align:center;padding:6px;font-weight:700;color:var(--accent)">'+p.titPct+'%<span style="font-size:9px;color:var(--ink3);font-weight:400"> ('+p.titN+'p)</span></td>'+
+      '<td style="text-align:center;padding:6px;color:var(--ink3)">'+p.absPct+'%<span style="font-size:9px"> ('+p.absN+'p)</span></td>'+
+      '<td style="text-align:center;padding:6px;font-weight:700;'+dc+'">'+sign+p.delta+'</td>'+
+      '</tr>';
+  }).join('');
+  document.getElementById('anl-absent').innerHTML=absThead+absBodyRows+'</tbody></table>'+
+    '<div style="font-size:10px;color:var(--ink3);margin-top:6px">Solo jugadores con ≥8 titularidades y ≥3 partidos completamente ausentes.</div>';
 }
 
 // ═══════════════════════════════════════════════════
