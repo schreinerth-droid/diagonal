@@ -226,7 +226,6 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
   <div class="card"><div class="card-head"><span class="card-title">🗒️ Alineaciones titulares</span></div><div class="card-body" id="anl-xis"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">🧤 Portero y resultado</span></div><div class="card-body" id="anl-gk"></div></div>
   <div class="card"><div class="card-head"><span class="card-title">🔄 Cambios en el XI</span></div><div class="card-body" id="anl-stab"></div></div>
-  <div class="card"><div class="card-head"><span class="card-title">❌ Impacto de ausencias</span></div><div class="card-body" id="anl-absent"></div></div>
 </div>
 
 </main>
@@ -947,34 +946,6 @@ function renderAnalisis(){
   document.getElementById('anl-stab').innerHTML=stabThead+stabRows+'</tbody></table>'+
     '<div style="font-size:10px;color:var(--ink3);margin-top:6px">J1 excluido (sin partido anterior). Cambios calculados sobre titulares.</div>';
 
-  // ── Impacto de ausencias ──────────────────────────────────────────
-  var absRows=impRows.filter(function(p){return p.tit>=8;}).map(function(p){
-    var absentMs=pl.filter(function(m){
-      return (m.titulars||[]).every(function(t){return t.id!==p.pid;})&&
-             (m.suplents||[]).every(function(t){return t.id!==p.pid;});
-    });
-    var ra=recOf(absentMs);
-    return{nm:p.nm,titPct:p.rt.pct,titN:p.tit,absPct:ra.pct,absN:absentMs.length,delta:p.rt.pct-ra.pct};
-  }).filter(function(r){return r.absN>=3;}).sort(function(a,b){return b.delta-a.delta;});
-  var absThead='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
-    '<th style="text-align:left;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Jugador</th>'+
-    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--accent)">%V titular</th>'+
-    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">%V ausente</th>'+
-    '<th style="text-align:center;padding:5px 6px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Δ</th>'+
-    '</tr></thead><tbody>';
-  var absBodyRows=absRows.map(function(p,i){
-    var bg=i%2===0?'':'background:var(--surface2)';
-    var dc=p.delta>10?'color:var(--win)':p.delta<-10?'color:var(--loss)':'color:var(--ink3)';
-    var sign=p.delta>0?'+':'';
-    return'<tr style="'+bg+'">'+
-      '<td style="padding:6px;font-weight:600">'+p.nm+'</td>'+
-      '<td style="text-align:center;padding:6px;font-weight:700;color:var(--accent)">'+p.titPct+'%<span style="font-size:9px;color:var(--ink3);font-weight:400"> ('+p.titN+'p)</span></td>'+
-      '<td style="text-align:center;padding:6px;color:var(--ink3)">'+p.absPct+'%<span style="font-size:9px"> ('+p.absN+'p)</span></td>'+
-      '<td style="text-align:center;padding:6px;font-weight:700;'+dc+'">'+sign+p.delta+'</td>'+
-      '</tr>';
-  }).join('');
-  document.getElementById('anl-absent').innerHTML=absThead+absBodyRows+'</tbody></table>'+
-    '<div style="font-size:10px;color:var(--ink3);margin-top:6px">Solo jugadores con ≥8 titularidades y ≥3 partidos completamente ausentes.</div>';
 }
 
 // ═══════════════════════════════════════════════════
