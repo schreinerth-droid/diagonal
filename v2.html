@@ -466,6 +466,11 @@ function maxN(a){return a.reduce(function(x,y){return x>y?x:y;},0);}
 function maxStreak(arr,fn){var mx=0,c=0;arr.forEach(function(m){c=fn(m)?c+1:0;if(c>mx)mx=c;});return mx;}
 function tramo(m){if(m<=12)return 0;if(m<=24)return 1;if(m<=35)return 2;if(m<=47)return 3;if(m<=59)return 4;return 5;}
 function rl(r){return{G:'V',E:'E',P:'D'}[r]||'?';}
+function upcomingTeams(u){
+  return u.home
+    ? '<span class="uprow-our">Diagonal</span> vs ' + u.rival
+    : u.rival + ' vs <span class="uprow-our">Diagonal</span>';
+}
 function arow(l,v){return'<div class="arow"><span class="arow-lbl">'+l+'</span><span class="arow-val">'+v+'</span></div>';}
 function stCard(v,l,c){return'<div class="stat-card"><div class="stat-v"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div><div class="stat-l">'+l+'</div></div>';}
 function bbar(l,v,mx,c){var p=mx>0?Math.round(v/mx*100):0;return'<div class="bbar"><span class="bbar-lbl">'+l+'</span><div class="bbar-track"><div class="bbar-fill" style="width:'+p+'%;background:'+c+'"></div></div><span class="bbar-val" style="color:'+c+'">'+v+'</span></div>';}
@@ -557,14 +562,51 @@ function renderClasificacion(){
 }
 
 function renderProximos(){
-  var pjs=MATCHES.map(function(m){return m.j;});
-  var pend=UPCOMING.filter(function(u){return pjs.indexOf(u.j)===-1;});
-  var next=pend[0]||null;
-  var nc=document.getElementById('next-match');
-  if(next){nc.innerHTML='<div class="card-body"><div style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">J'+next.j+' · '+fmtDate(next.date)+'</div><div style="display:flex;align-items:center;gap:10px"><span class="loc-badge '+(next.home?'loc-C':'loc-F')+'">'+(next.home?'🏠 Casa':'✈️ Fuera')+'</span><span style="font-size:16px;font-weight:700;color:var(--accent)">Diagonal</span><span style="color:var(--ink3)">vs</span><span style="font-size:15px">'+next.rival+'</span></div></div>';}
-  else nc.innerHTML='<div class="card-body"><div class="empty">Sin partidos pendientes</div></div>';
-  document.getElementById('upcoming-rest').innerHTML=pend.slice(1).map(function(u){return'<div class="uprow"><div class="uprow-j">J'+u.j+'</div><span class="loc-badge '+(u.home?'loc-C':'loc-F')+'">'+(u.home?'Casa':'Fuera')+'</span><div class="uprow-info"><span class="uprow-our">Diagonal</span> vs '+u.rival+'<div class="uprow-date">'+fmtDate(u.date)+'</div></div></div>';}).join('')||'<div class="empty">Sin más partidos</div>';
-  document.getElementById('upcoming-all').innerHTML=pend.map(function(u){return'<div class="uprow next-hl"><div class="uprow-j">J'+u.j+'</div><span class="loc-badge '+(u.home?'loc-C':'loc-F')+'">'+(u.home?'Casa':'Fuera')+'</span><div class="uprow-info"><span class="uprow-our">Diagonal</span> vs '+u.rival+'<div class="uprow-date">'+fmtDate(u.date)+'</div></div></div>';}).join('')||'<div class="empty">Sin partidos pendientes</div>';
+  var pjs = MATCHES.map(function(m){ return m.j; });
+  var pend = UPCOMING
+    .filter(function(u){ return pjs.indexOf(u.j) === -1; })
+    .sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+  var next = pend[0] || null;
+  var nc = document.getElementById('next-match');
+
+  if(next){
+    nc.innerHTML =
+      '<div class="card-body">' +
+        '<div style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">' +
+          'J' + next.j + ' · ' + fmtDate(next.date) +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+          '<span class="loc-badge ' + (next.home ? 'loc-C' : 'loc-F') + '">' + (next.home ? 'Casa' : 'Fuera') + '</span>' +
+          '<div style="font-size:15px">' + upcomingTeams(next) + '</div>' +
+        '</div>' +
+      '</div>';
+  } else {
+    nc.innerHTML = '<div class="card-body"><div class="empty">Sin partidos pendientes</div></div>';
+  }
+
+  document.getElementById('upcoming-rest').innerHTML =
+    pend.slice(1).map(function(u){
+      return '<div class="uprow">' +
+        '<div class="uprow-j">J' + u.j + '</div>' +
+        '<span class="loc-badge ' + (u.home ? 'loc-C' : 'loc-F') + '">' + (u.home ? 'Casa' : 'Fuera') + '</span>' +
+        '<div class="uprow-info">' +
+          upcomingTeams(u) +
+          '<div class="uprow-date">' + fmtDate(u.date) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('') || '<div class="empty">Sin más partidos</div>';
+
+  document.getElementById('upcoming-all').innerHTML =
+    pend.map(function(u, i){
+      return '<div class="uprow' + (i === 0 ? ' next-hl' : '') + '">' +
+        '<div class="uprow-j">J' + u.j + '</div>' +
+        '<span class="loc-badge ' + (u.home ? 'loc-C' : 'loc-F') + '">' + (u.home ? 'Casa' : 'Fuera') + '</span>' +
+        '<div class="uprow-info">' +
+          upcomingTeams(u) +
+          '<div class="uprow-date">' + fmtDate(u.date) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('') || '<div class="empty">Sin partidos pendientes</div>';
 }
 
 function renderPartidos(){
@@ -967,6 +1009,13 @@ renderPartidos();
 renderJugadores();
 renderArbitros();
 renderAnalisis();
+
+(function(){
+  var el = document.createElement('div');
+  el.style.cssText = 'margin-top:32px;padding-top:12px;border-top:1px solid var(--border);color:var(--ink3);font-size:11px;line-height:1.6';
+  el.textContent = 'Los partidos se actualizan manualmente a partir de actas oficiales de la FCF. El proceso se realiza fuera de la aplicación y requiere modificar el archivo de datos. La clasificación se actualiza manualmente tras cada jornada.';
+  document.querySelector('main').appendChild(el);
+})();
 
 </script>
 </body>
