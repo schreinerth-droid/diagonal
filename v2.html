@@ -889,7 +889,7 @@ function renderAnalisis(){
   var xiUnique=xis.filter(function(x){return x.ms.length===1;});
   function xiBlock(x){
     var r=recOf(x.ms);
-    var names=x.key.split(',').map(function(pid){return shortN(pid);}).join(' · ');
+    var names=x.key.split(',').map(function(pid){return pid==='fj'?'Javier G.':shortN(pid);}).join(' · ');
     var tags=x.ms.map(function(m){
       var c={G:'var(--win)',E:'var(--draw)',P:'var(--loss)'}[m.res];
       return'<span style="display:inline-block;font-size:10px;font-weight:700;color:'+c+';border:1px solid '+c+';border-radius:3px;padding:1px 5px;margin:1px 2px">'+rl(m.res)+' J'+m.j+' '+m.gf+'–'+m.gc+'</span>';
