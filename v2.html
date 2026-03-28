@@ -275,14 +275,23 @@ function maxStreak(arr,fn){var mx=0,c=0;arr.forEach(function(m){c=fn(m)?c+1:0;if
 function tramo(m){if(m<=12)return 0;if(m<=24)return 1;if(m<=35)return 2;if(m<=47)return 3;if(m<=59)return 4;return 5;}
 function rl(r){return{G:'V',E:'E',P:'D'}[r]||'?';}
 function upcomingTeams(u){
+  var rival=safeText(u.rival);
   return u.home
-    ? '<span class="uprow-our">Diagonal</span> vs ' + u.rival
-    : u.rival + ' vs <span class="uprow-our">Diagonal</span>';
+    ? '<span class="uprow-our">Diagonal</span> vs ' + rival
+    : rival + ' vs <span class="uprow-our">Diagonal</span>';
 }
 function arow(l,v){return'<div class="arow"><span class="arow-lbl">'+l+'</span><span class="arow-val">'+v+'</span></div>';}
 function stCard(v,l,c){return'<div class="stat-card"><div class="stat-v"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div><div class="stat-l">'+l+'</div></div>';}
 function bbar(l,v,mx,c){var p=mx>0?Math.round(v/mx*100):0;return'<div class="bbar"><span class="bbar-lbl">'+l+'</span><div class="bbar-track"><div class="bbar-fill" style="width:'+p+'%;background:'+c+'"></div></div><span class="bbar-val" style="color:'+c+'">'+v+'</span></div>';}
 function fmtDate(d){var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function safeText(v){
+  return String(v==null?'':v)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'",'&#39;');
+}
 
 // ═══════════════════════════════════════════════════
 // 5. BUILD PLAYERS STATS
@@ -325,6 +334,19 @@ function renderResumen(){
   }
   document.getElementById('r-loc').innerHTML=locSec(pl.filter(function(m){return m.loc==='C';}),'🏠 Casa')+locSec(pl.filter(function(m){return m.loc==='F';}),'✈️ Fuera');
 
+  if(!n){
+    document.getElementById('r-forma').innerHTML=
+      '<div style="font-size:12px;color:var(--ink3)">Sin partidos cargados todavía.</div>';
+    document.getElementById('goals-chart').innerHTML='';
+    document.getElementById('pts-chart').innerHTML='';
+    document.getElementById('r-medias').innerHTML=
+      arow('GF / partido','0.00')+
+      arow('GC / partido','0.00')+
+      arow('Pts / partido','0.00')+
+      arow('% victorias','0%');
+    return;
+  }
+
   var streak=0,rt=null;
   for(var i=pl.length-1;i>=0;i--){if(rt===null)rt=pl[i].res;if(pl[i].res===rt)streak++;else break;}
   var rL={G:'🔥 Racha ganando',E:'Racha empatando',P:'Sin ganar'}[rt]||'—';
@@ -354,18 +376,19 @@ function renderResumen(){
   pArr.forEach(function(p,i){var x=ppx+i*sl,y=PH-ppy-(p/pmx)*(PH-2*ppy);ph+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3" fill="var(--accent)"/>';});
   psvg.innerHTML=ph;
 
-  document.getElementById('r-medias').innerHTML=arow('GF / partido',(gf/n).toFixed(2))+arow('GC / partido',(gc/n).toFixed(2))+arow('Pts / partido',(pts/n).toFixed(2))+arow('% victorias',Math.round(w/n*100)+'%');
+  document.getElementById('r-medias').innerHTML=arow('GF / partido',(gf/n).toFixed(2))+arow('GC / partido',(gc/n).toFixed(2))+arow('Pts / partido',(pts/n).toFixed(2))+arow('% victorias',Math.round(n?w/n*100:0)+'%');
 }
 
 function renderClasificacion(){
   document.getElementById('clas-updated').textContent=CLAS.updated;
-  var sorted=CLAS.teams.slice().sort(function(a,b){if(b.pts!==a.pts)return b.pts-a.pts;var da=a.gf-a.gc,db=b.gf-b.gc;if(db!==da)return db-da;return b.gf-a.gf;});
-  document.getElementById('clas-body').innerHTML=sorted.map(function(t,i){
+  var teams=CLAS.teams.slice();
+  document.getElementById('clas-body').innerHTML=teams.map(function(t,i){
     var pos=i+1,dif=t.gf-t.gc,pc=pos===1?'pos-champ':pos>=13?'pos-dn':'pos-mid';
     var isDiag=t.n.toUpperCase().indexOf('DIAGONAL')!==-1;
     var zc=pos===1?' zone-champ':pos>=13?' zone-dn':'';
     var dots=(t.l5||[]).map(function(r){return r==='N'?'<div class="l5d l5-N">–</div>':'<div class="l5d l5-'+r+'">'+r+'</div>';}).join('');
-    return'<tr class="'+(isDiag?'diag':'')+zc+'"><td><span class="pos '+pc+'">'+pos+'</span></td><td class="tl">'+(isDiag?'<strong>'+t.n+'</strong>':t.n)+'</td><td class="pts-b">'+t.pts+'</td><td>'+t.pj+'</td><td>'+t.g+'</td><td>'+t.e+'</td><td>'+t.p+'</td><td>'+t.gf+'</td><td>'+t.gc+'</td><td style="font-weight:600;color:'+(dif>=0?'var(--win)':'var(--loss)')+'">'+(dif>0?'+':'')+dif+'</td><td><div class="last5">'+dots+'</div></td></tr>';
+    var teamName=safeText(t.n);
+    return'<tr class="'+(isDiag?'diag':'')+zc+'"><td><span class="pos '+pc+'">'+pos+'</span></td><td class="tl">'+(isDiag?'<strong>'+teamName+'</strong>':teamName)+'</td><td class="pts-b">'+t.pts+'</td><td>'+t.pj+'</td><td>'+t.g+'</td><td>'+t.e+'</td><td>'+t.p+'</td><td>'+t.gf+'</td><td>'+t.gc+'</td><td style="font-weight:600;color:'+(dif>=0?'var(--win)':'var(--loss)')+'">'+(dif>0?'+':'')+dif+'</td><td><div class="last5">'+dots+'</div></td></tr>';
   }).join('');
 }
 
@@ -420,10 +443,11 @@ function renderProximos(){
 function renderPartidos(){
   document.getElementById('partidos-list').innerHTML=MATCHES.slice().reverse().map(function(m){
     var isC=m.loc==='C';
-    var loc=isC?'<span class="our">Diagonal</span>':m.home;
-    var vis=isC?m.away:'<span class="our">Diagonal</span>';
+    var loc=isC?'<span class="our">Diagonal</span>':safeText(m.home);
+    var vis=isC?safeText(m.away):'<span class="our">Diagonal</span>';
     var sL=isC?m.gf:m.gc,sV=isC?m.gc:m.gf;
-    return'<div class="mrow"><div class="mrow-j">J'+m.j+'</div><div class="res-badge res-'+m.res+'">'+rl(m.res)+'</div><div class="mrow-info"><div class="mrow-teams">'+loc+' vs '+vis+'</div><div class="mrow-meta">'+fmtDate(m.date)+(m.ref?' · '+m.ref:'')+'</div></div><div class="mrow-score">'+sL+' – '+sV+'</div><div class="loc-badge '+(isC?'loc-C':'loc-F')+'">'+(isC?'Casa':'Fuera')+'</div></div>';
+    var refTxt=m.ref?' · '+safeText(m.ref):'';
+    return'<div class="mrow"><div class="mrow-j">J'+m.j+'</div><div class="res-badge res-'+m.res+'">'+rl(m.res)+'</div><div class="mrow-info"><div class="mrow-teams">'+loc+' vs '+vis+'</div><div class="mrow-meta">'+fmtDate(m.date)+refTxt+'</div></div><div class="mrow-score">'+sL+' – '+sV+'</div><div class="loc-badge '+(isC?'loc-C':'loc-F')+'">'+(isC?'Casa':'Fuera')+'</div></div>';
   }).join('');
 }
 
@@ -431,7 +455,7 @@ function renderJugadores(){
   var players=buildPlayers();
   document.getElementById('players-body').innerHTML=players.sort(function(a,b){return b.goals-a.goals||(b.tit+b.sup)-(a.tit+a.sup);}).map(function(p){
     var t=p.tit+p.sup;
-    return'<tr><td><span class="dor">'+p.dorsal+'</span>'+p.name+'</td><td class="r">'+(p.goals?'<span class="pill pill-g">'+p.goals+'</span>':'—')+'</td><td class="r">'+(p.yellows?'<span class="pill pill-y">'+p.yellows+'</span>':'—')+'</td><td class="r">'+(p.reds?'<span class="pill pill-r">'+p.reds+'</span>':'—')+'</td><td class="r"><span class="pill pill-b">'+p.tit+'</span></td><td class="r"><span class="pill pill-s">'+p.sup+'</span></td><td class="r" style="font-weight:600">'+t+'</td></tr>';
+    return'<tr><td><span class="dor">'+safeText(p.dorsal)+'</span>'+safeText(p.name)+'</td><td class="r">'+(p.goals?'<span class="pill pill-g">'+p.goals+'</span>':'—')+'</td><td class="r">'+(p.yellows?'<span class="pill pill-y">'+p.yellows+'</span>':'—')+'</td><td class="r">'+(p.reds?'<span class="pill pill-r">'+p.reds+'</span>':'—')+'</td><td class="r"><span class="pill pill-b">'+p.tit+'</span></td><td class="r"><span class="pill pill-s">'+p.sup+'</span></td><td class="r" style="font-weight:600">'+t+'</td></tr>';
   }).join('');
 }
 
@@ -447,7 +471,7 @@ function renderArbitros(){
     var dots=r.matches.map(function(p){return'<div class="rdot res-'+p.res+'">'+rl(p.res)+'</div>';}).join('');
     var avgY=(r.yellows/r.matches.length).toFixed(1);
     var ystat='<span style="font-size:10px;font-weight:700;color:var(--yellow);background:var(--yellow-bg);padding:2px 6px;border-radius:3px;margin-left:5px">🟨 '+avgY+'</span>';
-    return'<div class="ref-row"><div class="ref-name">'+r.name+rep+'<div class="ref-sub">'+r.del+' · J'+r.matches.map(function(p){return p.j;}).join(', J')+'</div></div><div class="rdots">'+dots+'</div><span class="ref-badge '+bc+'">'+bt+'</span>'+ystat+'</div>';
+    return'<div class="ref-row"><div class="ref-name">'+safeText(r.name)+rep+'<div class="ref-sub">'+safeText(r.del)+' · J'+r.matches.map(function(p){return p.j;}).join(', J')+'</div></div><div class="rdots">'+dots+'</div><span class="ref-badge '+bc+'">'+bt+'</span>'+ystat+'</div>';
   }).join('');
 }
 
@@ -475,9 +499,9 @@ function renderAnalisis(){
   var totY=sum(players,function(p){return p.yellows;});
   var totR=sum(players,function(p){return p.reds;});
   var pend=UPCOMING.filter(function(u){return pl.map(function(m){return m.j;}).indexOf(u.j)===-1;}).length;
-  var proy=Math.round(pts+(pts/n)*pend);
+  var proy=n?Math.round(pts+(pts/n)*pend):0;
 
-  document.getElementById('anl-stats').innerHTML=stCard(cs,'Ptas a cero','var(--win)')+stCard(both,'Ambos marcan','')+stCard(Math.round(w/n*100)+'%','% victorias','var(--accent)')+stCard((gf/n).toFixed(1),'Media GF','var(--accent)');
+  document.getElementById('anl-stats').innerHTML=stCard(cs,'Ptas a cero','var(--win)')+stCard(both,'Ambos marcan','')+stCard(Math.round(n?w/n*100:0)+'%','% victorias','var(--accent)')+stCard((n?gf/n:0).toFixed(1),'Media GF','var(--accent)');
   document.getElementById('anl-partes').innerHTML=arow('GF 1ª parte','<span style="color:var(--accent)">'+gfH1+'</span>')+arow('GF 2ª parte','<span style="color:var(--accent)">'+gfH2+'</span>')+arow('GC 1ª parte','<span style="color:var(--loss)">'+gcH1+'</span>')+arow('GC 2ª parte','<span style="color:var(--loss)">'+gcH2+'</span>');
   document.getElementById('anl-loc').innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
     '<th style="text-align:left;padding:6px 8px;border-bottom:2px solid var(--border);font-size:10px;font-weight:700;color:var(--ink3)">Localía</th>'+
@@ -635,7 +659,7 @@ function renderAnalisis(){
     var nm=PLAYERS[id]?PLAYERS[id].name:'';
     if(!nm) return id;
     var ci=nm.indexOf(',');
-    return ci<0 ? nm : nm.slice(ci+1).trim().split(' ')[0];
+    return ci<0 ? safeText(nm) : safeText(nm.slice(ci+1).trim().split(' ')[0]);
   }
   function recOf(arr){
     var rw=arr.filter(function(m){return m.res==='G';}).length;
@@ -672,7 +696,7 @@ function renderAnalisis(){
       var tc=p.rt.pct>=60?'color:var(--win)':p.rt.pct<=33?'color:var(--loss)':'';
       var tc2=p.bench>0?(p.rb.pct>=60?'color:var(--win)':p.rb.pct<=33?'color:var(--loss)':''):'color:var(--ink3)';
       return'<tr style="'+bg+'">'+
-        '<td style="padding:6px 6px;font-weight:600">'+p.nm+'</td>'+
+        '<td style="padding:6px 6px;font-weight:600">'+safeText(p.nm)+'</td>'+
         '<td style="text-align:center;padding:6px" colspan="2">'+p.tit+'</td>'+
         '<td style="text-align:center;padding:6px;color:var(--win);font-weight:700">'+p.rt.w+'</td>'+
         '<td style="text-align:center;padding:6px;color:var(--draw);font-weight:700">'+p.rt.d+'</td>'+
