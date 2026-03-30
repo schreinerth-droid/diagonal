@@ -1,135 +1,354 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diagonal Club Esp. A</title>
   <style>
+    *,*::before,*::after{box-sizing:border-box}
+    :root{
+      --bg:#f5f5f3;
+      --surface:#fff;
+      --surface2:#f0ede8;
+      --border:#e2ddd7;
+      --ink:#1a1916;
+      --ink2:#5a5650;
+      --ink3:#9a9690;
+      --accent:#1a3a6b;
+      --accent-light:#e8eef7;
+      --win:#1a6b3c;
+      --win-bg:#e8f5ee;
+      --draw:#7a5f1a;
+      --draw-bg:#fdf6e3;
+      --loss:#8b1a1a;
+      --loss-bg:#fdeaea;
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+      --radius:18px;
+    }
+
     body{
-      font-family: Arial, sans-serif;
-      background:#f5f5f3;
       margin:0;
-      padding:20px;
-      color:#1a1916;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      line-height:1.45;
     }
 
-    .container{
-      max-width:1100px;
+    .wrap{
+      max-width:1320px;
       margin:0 auto;
+      padding:24px;
     }
 
-    h1{
-      margin:0 0 6px 0;
-      font-size:32px;
+    .header{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:16px;
+      margin-bottom:22px;
+    }
+
+    .title h1{
+      margin:0;
+      font-size:clamp(28px,4vw,44px);
+      letter-spacing:-.03em;
     }
 
     .sub{
-      color:#666;
-      margin-bottom:24px;
+      color:var(--ink2);
+      margin-top:6px;
+    }
+
+    .top-badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:700;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid transparent;
+      white-space:nowrap;
+    }
+
+    .badge.pending{background:var(--draw-bg);color:var(--draw);border-color:#ecdca8}
+    .badge.good{background:var(--win-bg);color:var(--win);border-color:#cfe8d9}
+    .badge.bad{background:var(--loss-bg);color:var(--loss);border-color:#f0c7c7}
+
+    .grid{
+      display:grid;
+      gap:20px;
+    }
+
+    .grid-2{
+      grid-template-columns:1.2fr .8fr;
+    }
+
+    .grid-3{
+      grid-template-columns:repeat(3,1fr);
+    }
+
+    @media (max-width:1100px){
+      .grid-2,.grid-3{grid-template-columns:1fr}
     }
 
     .card{
-      background:#fff;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 5px 20px rgba(0,0,0,0.05);
-      margin-bottom:20px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
-    h2{
-      margin:0 0 16px 0;
-      font-size:22px;
+    .card-body{
+      padding:20px;
+    }
+
+    .card h2{
+      margin:0 0 14px 0;
+      font-size:20px;
+      letter-spacing:-.02em;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+    }
+
+    @media (max-width:900px){
+      .kpis{grid-template-columns:repeat(2,1fr)}
+    }
+
+    .kpi{
+      background:var(--surface2);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+    }
+
+    .kpi .label{
+      color:var(--ink2);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+
+    .kpi .value{
+      margin-top:6px;
+      font-size:30px;
+      font-weight:800;
+      letter-spacing:-.03em;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .kpi .meta{
+      margin-top:4px;
+      color:var(--ink2);
+      font-size:13px;
+    }
+
+    .muted{
+      color:var(--ink2);
     }
 
     .controls{
       display:flex;
       gap:10px;
-      margin-bottom:15px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
     }
 
     button{
-      padding:8px 12px;
-      border-radius:8px;
-      border:1px solid #ccc;
+      border:1px solid var(--border);
+      background:var(--surface);
+      color:var(--ink);
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:700;
       cursor:pointer;
-      background:white;
-      font-weight:600;
     }
 
     button.active{
-      background:#1a3a6b;
-      color:white;
-      border-color:#1a3a6b;
+      background:var(--accent);
+      color:#fff;
+      border-color:var(--accent);
+    }
+
+    .table-wrap{
+      overflow:auto;
     }
 
     table{
       width:100%;
       border-collapse:collapse;
+      min-width:760px;
     }
 
-    th, td{
-      padding:10px;
-      border-bottom:1px solid #eee;
+    thead th{
       text-align:left;
-    }
-
-    th{
       font-size:12px;
       text-transform:uppercase;
-      color:#666;
+      letter-spacing:.08em;
+      color:var(--ink2);
+      border-bottom:1px solid var(--border);
+      padding:12px 10px;
+      background:var(--surface);
+      position:sticky;
+      top:0;
+      z-index:1;
     }
 
-    tr.diagonal{
-      background:#eef3ff;
-      font-weight:700;
+    tbody td{
+      padding:12px 10px;
+      border-bottom:1px solid var(--border);
+      vertical-align:middle;
+      font-variant-numeric:tabular-nums;
     }
 
-    .badge{
-      padding:4px 8px;
-      border-radius:6px;
+    tbody tr:hover{background:#faf9f7}
+    tbody tr.diagonal{background:#f7faff}
+
+    .pill{
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:999px;
       font-size:12px;
       font-weight:700;
-      display:inline-block;
     }
 
-    .pending{
-      background:#fff4d6;
-      color:#8a6d00;
+    .pill.win{background:var(--win-bg);color:var(--win)}
+    .pill.draw{background:var(--draw-bg);color:var(--draw)}
+    .pill.loss{background:var(--loss-bg);color:var(--loss)}
+
+    .list{
+      display:grid;
+      gap:10px;
     }
 
-    .ok{
-      background:#e6f4ea;
-      color:#1a6b3c;
+    .list-item{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+      background:var(--surface2);
     }
 
-    .summary{
-      margin-top:10px;
-      color:#555;
+    .list-item h3{
+      margin:0 0 4px 0;
+      font-size:16px;
+    }
+
+    .list-item p{
+      margin:0;
+      color:var(--ink2);
       font-size:14px;
     }
 
-    @media (max-width: 768px){
-      body{padding:14px}
-      h1{font-size:26px}
-      th, td{padding:8px}
+    .form{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+
+    .form span{
+      width:28px;
+      height:28px;
+      border-radius:8px;
+      display:grid;
+      place-items:center;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .form .W{background:var(--win-bg);color:var(--win)}
+    .form .D{background:var(--draw-bg);color:var(--draw)}
+    .form .L{background:var(--loss-bg);color:var(--loss)}
+
+    .section-spacer{margin-top:20px}
+
+    .small{
+      font-size:13px;
+      color:var(--ink2);
+    }
+
+    .empty{
+      color:var(--ink2);
+      padding:10px 0 0 0;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Diagonal Club Esp. A</h1>
-    <div class="sub">INFANTIL PRIMERA DIVISIÓ S14 · GRUP 9</div>
-
-    <div class="card">
-      <h2>Clasificación</h2>
-
-      <div class="controls">
-        <button id="btnOfficial" class="active" type="button">Oficial</button>
-        <button id="btnPPG" type="button">PPG</button>
+  <div class="wrap">
+    <div class="header">
+      <div class="title">
+        <h1>Diagonal Club Esp. A</h1>
+        <div class="sub">INFANTIL PRIMERA DIVISIÓ S14 · GRUP 9</div>
       </div>
+      <div class="top-badges" id="topBadges"></div>
+    </div>
 
-      <div id="standingsTable"></div>
-      <div id="standingsSummary" class="summary"></div>
+    <section class="card">
+      <div class="card-body">
+        <h2>Resumen</h2>
+        <div class="kpis" id="kpis"></div>
+        <div id="summaryNote" class="small section-spacer"></div>
+      </div>
+    </section>
+
+    <div class="grid grid-2 section-spacer">
+      <section class="card">
+        <div class="card-body">
+          <h2>Clasificación</h2>
+          <div class="controls">
+            <button id="btnOfficial" class="active" type="button">Oficial</button>
+            <button id="btnPPG" type="button">PPG</button>
+          </div>
+          <div id="standingsTable"></div>
+          <div id="standingsSummary" class="small section-spacer"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          <h2>Próximo partido</h2>
+          <div id="upcomingCard"></div>
+
+          <div class="section-spacer">
+            <h2>Últimos partidos</h2>
+            <div id="recentMatches" class="list"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid grid-3 section-spacer">
+      <section class="card">
+        <div class="card-body">
+          <h2>Jugadores</h2>
+          <div id="playersStats"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          <h2>Árbitros</h2>
+          <div id="refsStats"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          <h2>Análisis</h2>
+          <div id="analysisBox"></div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -142,49 +361,438 @@
   <script>
     let mode = 'official';
 
+    function safeArray(v){
+      return Array.isArray(v) ? v : [];
+    }
+
+    function getDiagonalMatches(){
+      return safeArray(window.MATCHES);
+    }
+
+    function getPlayers(){
+      return safeArray(window.PLAYERS);
+    }
+
+    function getUpcoming(){
+      return window.UPCOMING || null;
+    }
+
+    function computeStatsFromMatches(){
+      const matches = getDiagonalMatches();
+      const played = matches.length;
+      const wins = matches.filter(m => m.res === 'G').length;
+      const draws = matches.filter(m => m.res === 'E').length;
+      const losses = matches.filter(m => m.res === 'P').length;
+
+      let gf = 0;
+      let gc = 0;
+
+      matches.forEach(m => {
+        const homeIsDiagonal = String(m.home || '').toLowerCase().includes('diagonal');
+        const awayIsDiagonal = String(m.away || '').toLowerCase().includes('diagonal');
+
+        if (homeIsDiagonal) {
+          gf += Number(m.gf || 0);
+          gc += Number(m.gc || 0);
+        } else if (awayIsDiagonal) {
+          gf += Number(m.gc || 0);
+          gc += Number(m.gf || 0);
+        }
+      });
+
+      return {
+        played,
+        wins,
+        draws,
+        losses,
+        points:wins * 3 + draws,
+        gf,
+        gc,
+        gd:gf - gc
+      };
+    }
+
+    function enrichStandingsFallback(row){
+      return {
+        ...row,
+        gd:(row.gf || 0) - (row.gc || 0),
+        ppg:row.j ? +(row.pts / row.j).toFixed(2) : 0,
+        pending:row.j < 23
+      };
+    }
+
+    function getStandingsDataFallback(){
+      return safeArray(window.STANDINGS).map(enrichStandingsFallback);
+    }
+
+    function getOfficialTableFallback(){
+      return [...getStandingsDataFallback()].sort((a,b) =>
+        (a.pos || 999) - (b.pos || 999) ||
+        b.pts - a.pts ||
+        b.gd - a.gd ||
+        b.gf - a.gf ||
+        String(a.team).localeCompare(String(b.team))
+      );
+    }
+
+    function getPerformanceTableFallback(){
+      return [...getStandingsDataFallback()].sort((a,b) =>
+        b.ppg - a.ppg ||
+        b.pts - a.pts ||
+        b.gd - a.gd ||
+        b.gf - a.gf ||
+        String(a.team).localeCompare(String(b.team))
+      );
+    }
+
+    function getDiagonalStandingFallback(){
+      return getStandingsDataFallback().find(r => r.team === 'DIAGONAL CLUB ESP. A') || null;
+    }
+
+    function renderStandingsTableFallback(targetId, renderMode){
+      const container = document.getElementById(targetId);
+      if (!container) return;
+
+      const data = renderMode === 'ppg' ? getPerformanceTableFallback() : getOfficialTableFallback();
+
+      if (!data.length) {
+        container.innerHTML = '<div class="empty">No standings data available.</div>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Equipo</th>
+                <th>Pts</th>
+                <th>J</th>
+                <th>G</th>
+                <th>E</th>
+                <th>P</th>
+                <th>GF</th>
+                <th>GC</th>
+                <th>DG</th>
+                <th>PPG</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map((row, idx) => {
+                const rank = renderMode === 'ppg' ? idx + 1 : row.pos;
+                const isDiagonal = row.team === 'DIAGONAL CLUB ESP. A';
+                return `
+                  <tr class="${isDiagonal ? 'diagonal' : ''}">
+                    <td>${rank}</td>
+                    <td>${row.team}</td>
+                    <td><strong>${row.pts}</strong></td>
+                    <td>${row.j}</td>
+                    <td>${row.g}</td>
+                    <td>${row.e}</td>
+                    <td>${row.p}</td>
+                    <td>${row.gf}</td>
+                    <td>${row.gc}</td>
+                    <td>${row.gd > 0 ? '+' : ''}${row.gd}</td>
+                    <td>${row.ppg.toFixed(2)}</td>
+                    <td>${row.pending ? '<span class="badge pending">Game in hand</span>' : '<span class="badge good">Level</span>'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderTopBadges(){
+      const el = document.getElementById('topBadges');
+      const d = (typeof getDiagonalStanding === 'function' ? getDiagonalStanding() : getDiagonalStandingFallback());
+      if (!d) {
+        el.innerHTML = '';
+        return;
+      }
+      el.innerHTML = `
+        <span class="badge good">${d.pts} pts</span>
+        <span class="badge ${d.pending ? 'pending' : 'good'}">${d.j} played</span>
+        <span class="badge good">PPG ${d.ppg.toFixed(2)}</span>
+      `;
+    }
+
+    function renderKpis(){
+      const el = document.getElementById('kpis');
+      const stats = computeStatsFromMatches();
+
+      el.innerHTML = `
+        <div class="kpi">
+          <div class="label">Puntos</div>
+          <div class="value">${stats.points}</div>
+          <div class="meta">Desde MATCHES</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Balance</div>
+          <div class="value">${stats.wins}-${stats.draws}-${stats.losses}</div>
+          <div class="meta">G · E · P</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Goles</div>
+          <div class="value">${stats.gf}-${stats.gc}</div>
+          <div class="meta">A favor · En contra</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Diferencia</div>
+          <div class="value">${stats.gd > 0 ? '+' : ''}${stats.gd}</div>
+          <div class="meta">${stats.played} partidos</div>
+        </div>
+      `;
+
+      const note = document.getElementById('summaryNote');
+      const standing = (typeof getDiagonalStanding === 'function' ? getDiagonalStanding() : getDiagonalStandingFallback());
+      const official = (typeof getOfficialTable === 'function' ? getOfficialTable() : getOfficialTableFallback());
+      const perf = (typeof getPerformanceTable === 'function' ? getPerformanceTable() : getPerformanceTableFallback());
+
+      if (!standing || !official.length || !perf.length) {
+        note.textContent = '';
+        return;
+      }
+
+      const officialPos = official.findIndex(r => r.team === 'DIAGONAL CLUB ESP. A') + 1;
+      const ppgPos = perf.findIndex(r => r.team === 'DIAGONAL CLUB ESP. A') + 1;
+      note.innerHTML = `Diagonal está <strong>${officialPos}º</strong> en la clasificación oficial y <strong>${ppgPos}º</strong> por PPG.${standing.pending ? ' Tiene un partido pendiente.' : ''}`;
+    }
+
+    function renderStandingsSummary(){
+      const el = document.getElementById('standingsSummary');
+      const standing = (typeof getDiagonalStanding === 'function' ? getDiagonalStanding() : getDiagonalStandingFallback());
+      const official = (typeof getOfficialTable === 'function' ? getOfficialTable() : getOfficialTableFallback());
+      const perf = (typeof getPerformanceTable === 'function' ? getPerformanceTable() : getPerformanceTableFallback());
+
+      if (!standing || !official.length || !perf.length) {
+        el.textContent = 'No standings data available.';
+        return;
+      }
+
+      const officialPos = official.findIndex(r => r.team === 'DIAGONAL CLUB ESP. A') + 1;
+      const ppgPos = perf.findIndex(r => r.team === 'DIAGONAL CLUB ESP. A') + 1;
+
+      el.innerHTML = `Posición oficial: <strong>${officialPos}º</strong> · Posición PPG: <strong>${ppgPos}º</strong> · ${standing.pending ? 'Partido pendiente.' : 'Calendario al día.'}`;
+    }
+
+    function renderUpcoming(){
+      const el = document.getElementById('upcomingCard');
+      const u = getUpcoming();
+
+      if (!u) {
+        el.innerHTML = '<div class="empty">No upcoming match available.</div>';
+        return;
+      }
+
+      const rival = u.home && String(u.home).toLowerCase().includes('diagonal') ? u.away : u.home;
+
+      el.innerHTML = `
+        <div class="list-item">
+          <h3>${u.home || 'TBD'} vs ${u.away || 'TBD'}</h3>
+          <p>${u.date || 'Date TBD'}${u.time ? ' · ' + u.time : ''}</p>
+          <p>${u.loc ? 'Condición: ' + u.loc : ''}${rival ? ' · Rival: ' + rival : ''}</p>
+          ${u.field ? `<p>Campo: ${u.field}</p>` : ''}
+        </div>
+      `;
+    }
+
+    function renderRecentMatches(){
+      const el = document.getElementById('recentMatches');
+      const matches = [...getDiagonalMatches()].slice(-5).reverse();
+
+      if (!matches.length) {
+        el.innerHTML = '<div class="empty">No match data available.</div>';
+        return;
+      }
+
+      el.innerHTML = matches.map(m => {
+        const homeIsDiagonal = String(m.home || '').toLowerCase().includes('diagonal');
+        const gf = homeIsDiagonal ? Number(m.gf || 0) : Number(m.gc || 0);
+        const gc = homeIsDiagonal ? Number(m.gc || 0) : Number(m.gf || 0);
+        const klass = m.res === 'G' ? 'win' : m.res === 'E' ? 'draw' : 'loss';
+        const label = m.res === 'G' ? 'G' : m.res === 'E' ? 'E' : 'P';
+
+        return `
+          <div class="list-item">
+            <h3>${m.home} ${m.gf} - ${m.gc} ${m.away}</h3>
+            <p>Jornada ${m.j} · ${m.date || ''}</p>
+            <p><span class="pill ${klass}">${label}</span></p>
+            <p>Lectura Diagonal: ${gf}-${gc}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPlayers(){
+      const el = document.getElementById('playersStats');
+      const players = getPlayers();
+      const matches = getDiagonalMatches();
+
+      if (!players.length) {
+        el.innerHTML = '<div class="empty">No player data available.</div>';
+        return;
+      }
+
+      const goalsMap = {};
+      matches.forEach(m => {
+        safeArray(m.goals).forEach(g => {
+          if (g.type === 'gf' && g.playerId) goalsMap[g.playerId] = (goalsMap[g.playerId] || 0) + 1;
+        });
+      });
+
+      const rows = players.map(p => ({
+        id:p.id,
+        name:p.name || p.nom || p.player || p.id,
+        num:p.number || p.dorsal || '',
+        goals:goalsMap[p.id] || 0
+      }))
+      .sort((a,b) => b.goals - a.goals || String(a.name).localeCompare(String(b.name)))
+      .slice(0,12);
+
+      el.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Jugador</th>
+                <th>Goles</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td>${r.num}</td>
+                  <td>${r.name}</td>
+                  <td>${r.goals}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderRefs(){
+      const el = document.getElementById('refsStats');
+      const matches = getDiagonalMatches();
+
+      if (!matches.length) {
+        el.innerHTML = '<div class="empty">No referee data available.</div>';
+        return;
+      }
+
+      const map = {};
+      matches.forEach(m => {
+        const key = m.ref || 'Unknown';
+        if (!map[key]) map[key] = { name:key, matches:0, wins:0, draws:0, losses:0 };
+        map[key].matches += 1;
+        if (m.res === 'G') map[key].wins += 1;
+        else if (m.res === 'E') map[key].draws += 1;
+        else map[key].losses += 1;
+      });
+
+      const rows = Object.values(map)
+        .sort((a,b) => b.matches - a.matches || a.name.localeCompare(b.name));
+
+      el.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Árbitro</th>
+                <th>Part.</th>
+                <th>G-E-P</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td>${r.name}</td>
+                  <td>${r.matches}</td>
+                  <td>${r.wins}-${r.draws}-${r.losses}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderAnalysis(){
+      const el = document.getElementById('analysisBox');
+      const matches = getDiagonalMatches();
+
+      if (!matches.length) {
+        el.innerHTML = '<div class="empty">No analysis available.</div>';
+        return;
+      }
+
+      const last5 = [...matches].slice(-5);
+      const form = last5.map(m => m.res === 'G' ? 'W' : m.res === 'E' ? 'D' : 'L');
+
+      const byResult = { W:0, D:0, L:0 };
+      form.forEach(r => byResult[r] += 1);
+
+      const standings = (typeof getDiagonalStanding === 'function' ? getDiagonalStanding() : getDiagonalStandingFallback());
+
+      el.innerHTML = `
+        <div class="list">
+          <div class="list-item">
+            <h3>Últimos 5</h3>
+            <div class="form">
+              ${form.map(f => `<span class="${f}">${f}</span>`).join('')}
+            </div>
+            <p>${byResult.W} victorias · ${byResult.D} empates · ${byResult.L} derrotas</p>
+          </div>
+          <div class="list-item">
+            <h3>Situación</h3>
+            <p>${standings ? `${standings.pts} puntos en ${standings.j} partidos · PPG ${standings.ppg.toFixed(2)}` : 'No standings data'}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStandings(){
+      if (typeof renderStandingsTable === 'function') {
+        renderStandingsTable('standingsTable', mode);
+      } else {
+        renderStandingsTableFallback('standingsTable', mode);
+      }
+      renderStandingsSummary();
+    }
+
     function setActiveButton(id){
       document.querySelectorAll('.controls button').forEach(btn => btn.classList.remove('active'));
       const btn = document.getElementById(id);
       if (btn) btn.classList.add('active');
     }
 
-    function renderSummary(){
-      if (typeof getDiagonalStanding !== 'function' || typeof getPerformanceTable !== 'function' || typeof getOfficialTable !== 'function') {
-        return;
-      }
-
-      const diagonal = getDiagonalStanding();
-      if (!diagonal) {
-        document.getElementById('standingsSummary').textContent = 'No standings data available.';
-        return;
-      }
-
-      const officialPos = getOfficialTable().findIndex(row => row.team === 'DIAGONAL CLUB ESP. A') + 1;
-      const ppgPos = getPerformanceTable().findIndex(row => row.team === 'DIAGONAL CLUB ESP. A') + 1;
-
-      document.getElementById('standingsSummary').innerHTML =
-        'Diagonal está <strong>' + officialPos + 'º</strong> en la clasificación oficial y <strong>' +
-        ppgPos + 'º</strong> por PPG. ' +
-        (diagonal.pending ? 'Tiene un partido pendiente.' : 'Tiene el calendario al día.');
-    }
-
     function renderPage(){
-      if (typeof renderStandingsTable === 'function') {
-        renderStandingsTable('standingsTable', mode);
-      }
-      renderSummary();
+      renderTopBadges();
+      renderKpis();
+      renderStandings();
+      renderUpcoming();
+      renderRecentMatches();
+      renderPlayers();
+      renderRefs();
+      renderAnalysis();
     }
 
     document.getElementById('btnOfficial').addEventListener('click', function(){
       mode = 'official';
       setActiveButton('btnOfficial');
-      renderPage();
+      renderStandings();
     });
 
     document.getElementById('btnPPG').addEventListener('click', function(){
       mode = 'ppg';
       setActiveButton('btnPPG');
-      renderPage();
+      renderStandings();
     });
 
     renderPage();
