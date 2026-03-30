@@ -162,7 +162,10 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
 
 <div id="clasificacion" class="sec">
   <div class="card">
-    <div class="card-head"><span class="card-title">Grup 9 · Infantil 1ª Div S14</span><span style="font-size:10px;color:var(--ink3)" id="clas-updated"></span></div>
+    <div class="card-head">
+      <span class="card-title">Grup 9 · Infantil 1ª Div S14</span>
+      <span style="font-size:10px;color:var(--ink3)" id="clas-updated"></span>
+    </div>
     <div style="overflow-x:auto"><table class="tbl"><thead><tr>
       <th style="width:28px">#</th><th class="tl">Equipo</th>
       <th>Pts</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>Dif</th><th>Últ.5</th>
@@ -233,30 +236,10 @@ main{max-width:1100px;margin:0 auto;padding:20px 24px}
 <script src="data/players.js"></script>
 <script src="data/matches.js"></script>
 <script src="data/upcoming.js"></script>
+<script src="data/standings.js"></script>
+<script src="update.js"></script>
 
 <script>
-var CLAS = {
-  updated:'J22 · 22 mar 2026',
-  teams:[
-    {n:'Escola de Futbol Premier Barcelona A',pj:22,g:17,e:4,p:1,gf:70,gc:24,pts:55,l5:['G','G','G','E','E']},
-    {n:"L'Hospitalet, Centre Esports C",pj:22,g:14,e:7,p:1,gf:91,gc:19,pts:49,l5:['E','G','G','E','G']},
-    {n:'Pª Barc. Anguera C',pj:22,g:15,e:4,p:3,gf:63,gc:20,pts:49,l5:['G','E','P','G','G']},
-    {n:'APA Poble Sec, CE. A',pj:22,g:14,e:3,p:5,gf:59,gc:25,pts:45,l5:['E','G','G','G','E']},
-    {n:'Escola Collblanc-Torrassa, CE A',pj:22,g:12,e:3,p:7,gf:64,gc:40,pts:39,l5:['G','E','P','G','P']},
-    {n:'Europa, CE. C',pj:22,g:11,e:5,p:6,gf:47,gc:32,pts:38,l5:['E','G','G','P','G']},
-    {n:'Escola F Angel Pedraza A',pj:22,g:11,e:3,p:8,gf:50,gc:47,pts:36,l5:['E','E','G','P','G']},
-    {n:'Penya Barc. Collblanc Sants, AE A',pj:22,g:9,e:6,p:7,gf:39,gc:33,pts:33,l5:['P','G','G','G','G']},
-    {n:'Diagonal Club Esp. A',pj:22,g:10,e:2,p:10,gf:27,gc:29,pts:32,l5:['G','P','G','G','P']},
-    {n:'Sarrià, CP. B',pj:22,g:8,e:6,p:8,gf:42,gc:55,pts:30,l5:['P','E','G','P','E']},
-    {n:'Can Vidalet, CF. A',pj:22,g:8,e:3,p:11,gf:23,gc:33,pts:27,l5:['P','G','P','G','P']},
-    {n:'Sant Ignasi CE. A',pj:22,g:6,e:3,p:13,gf:32,gc:54,pts:21,l5:['G','P','P','P','P']},
-    {n:"Fundació Academia F. L'Hospitalet B",pj:22,g:5,e:5,p:12,gf:17,gc:34,pts:20,l5:['P','P','P','G','G']},
-    {n:'Hospitalense, AT.C. A',pj:22,g:4,e:1,p:17,gf:30,gc:65,pts:13,l5:['G','P','P','P','P']},
-    {n:'Les Corts de Barcelona Club Esp. A',pj:22,g:3,e:3,p:16,gf:29,gc:90,pts:12,l5:['P','P','P','P','E']},
-    {n:'Sants, UE. B',pj:22,g:0,e:0,p:22,gf:10,gc:93,pts:0,l5:['P','P','P','P','P']}
-  ]
-};
-
 function sum(a,f){return a.reduce(function(s,x){return s+f(x);},0);}
 function maxN(a){return a.reduce(function(x,y){return x>y?x:y;},0);}
 function maxStreak(arr,fn){var mx=0,c=0;arr.forEach(function(m){c=fn(m)?c+1:0;if(c>mx)mx=c;});return mx;}
@@ -279,6 +262,34 @@ function safeText(v){
     .replaceAll('>','&gt;')
     .replaceAll('"','&quot;')
     .replaceAll("'",'&#39;');
+}
+
+function getStandingsRows(){
+  if (typeof getOfficialTable === 'function') return getOfficialTable();
+  if (!window.STANDINGS || !Array.isArray(window.STANDINGS)) return [];
+  return window.STANDINGS.slice().map(function(r){
+    var gf=Number(r.gf||0), gc=Number(r.gc||0), pts=Number(r.pts||0), j=Number(r.j||0);
+    return {
+      pos:Number(r.pos||0), team:r.team, pts:pts, j:j, g:Number(r.g||0), e:Number(r.e||0), p:Number(r.p||0),
+      gf:gf, gc:gc, gd:gf-gc, ppg:j?+(pts/j).toFixed(2):0, pending:j<23
+    };
+  }).sort(function(a,b){return a.pos-b.pos;});
+}
+
+function getDiagonalStandingRow(){
+  var rows=getStandingsRows();
+  for(var i=0;i<rows.length;i++){
+    if(String(rows[i].team||'').toUpperCase().indexOf('DIAGONAL')!==-1) return rows[i];
+  }
+  return null;
+}
+
+function last5ForTeam(name){
+  if (!window.STANDINGS || !Array.isArray(window.STANDINGS)) return ['N','N','N','N','N'];
+  var row = window.STANDINGS.find(function(r){ return String(r.team||'')===String(name||''); });
+  if (row && Array.isArray(row.last5)) return row.last5;
+  if (row && Array.isArray(row.l5)) return row.l5;
+  return ['N','N','N','N','N'];
 }
 
 function buildPlayers(){
@@ -317,8 +328,7 @@ function renderResumen(){
   document.getElementById('r-loc').innerHTML=locSec(pl.filter(function(m){return m.loc==='C';}),'🏠 Casa')+locSec(pl.filter(function(m){return m.loc==='F';}),'✈️ Fuera');
 
   if(!n){
-    document.getElementById('r-forma').innerHTML=
-      '<div style="font-size:12px;color:var(--ink3)">Sin partidos cargados todavía.</div>';
+    document.getElementById('r-forma').innerHTML='<div style="font-size:12px;color:var(--ink3)">Sin partidos cargados todavía.</div>';
     document.getElementById('goals-chart').innerHTML='';
     document.getElementById('pts-chart').innerHTML='';
     document.getElementById('r-medias').innerHTML=
@@ -342,15 +352,14 @@ function renderResumen(){
   var svg=document.getElementById('goals-chart');
   var W=820,H=140,px=28,py=12,base=H-py-18;
   var allG=pl.reduce(function(a,m){return a.concat([m.gf,m.gc]);},[]);
-  var mx=Math.max.apply(null,allG.concat([3]))+1;
-  var sw=(W-2*px)/n,bw=sw*0.26,ch='';
+  var mx=Math.max.apply(null,allG.concat([3]))+1,ch='';
   for(var v=0;v<=mx;v++){
     var y=base-(v/mx)*(H-2*py-18);
     ch+='<line x1="'+px+'" y1="'+y+'" x2="'+(W-px)+'" y2="'+y+'" stroke="#e2ddd7" stroke-width="'+(v===0?1.5:0.6)+'"/>';
     if(v>0)ch+='<text x="'+(px-4)+'" y="'+(y+3)+'" text-anchor="end" fill="#9a9690" font-size="9">'+v+'</text>';
   }
   pl.forEach(function(m,i){
-    var cx=px+(i+0.5)*sw;
+    var cx=px+(i+0.5)*((W-2*px)/n), sw=(W-2*px)/n, bw=sw*0.26;
     if(m.gf>0)ch+='<rect x="'+(cx-bw-1)+'" y="'+(base-(m.gf/mx)*(H-2*py-18))+'" width="'+bw+'" height="'+((m.gf/mx)*(H-2*py-18))+'" fill="var(--accent)" opacity=".8" rx="2"/>';
     if(m.gc>0)ch+='<rect x="'+(cx+1)+'" y="'+(base-(m.gc/mx)*(H-2*py-18))+'" width="'+bw+'" height="'+((m.gc/mx)*(H-2*py-18))+'" fill="#8b1a1a" opacity=".4" rx="2"/>';
     var dc=m.res==='G'?'#1a6b3c':m.res==='E'?'#7a5f1a':'#8b1a1a';
@@ -380,15 +389,22 @@ function renderResumen(){
 }
 
 function renderClasificacion(){
-  document.getElementById('clas-updated').textContent=CLAS.updated;
-  var teams=CLAS.teams.slice();
+  var teams=getStandingsRows();
+  document.getElementById('clas-updated').textContent='Clasificación oficial';
+  if(!teams.length){
+    document.getElementById('clas-body').innerHTML='<tr><td colspan="11" class="empty">Sin datos de clasificación</td></tr>';
+    return;
+  }
+
   document.getElementById('clas-body').innerHTML=teams.map(function(t,i){
-    var pos=i+1,dif=t.gf-t.gc,pc=pos===1?'pos-champ':pos>=13?'pos-dn':'pos-mid';
-    var isDiag=t.n.toUpperCase().indexOf('DIAGONAL')!==-1;
+    var pos=Number(t.pos||i+1), dif=(t.gf||0)-(t.gc||0);
+    var pc=pos===1?'pos-champ':pos>=13?'pos-dn':'pos-mid';
+    var isDiag=String(t.team||'').toUpperCase().indexOf('DIAGONAL')!==-1;
     var zc=pos===1?' zone-champ':pos>=13?' zone-dn':'';
-    var dots=(t.l5||[]).map(function(r){return r==='N'?'<div class="l5d l5-N">–</div>':'<div class="l5d l5-'+r+'">'+r+'</div>';}).join('');
-    var teamName=safeText(t.n);
-    return'<tr class="'+(isDiag?'diag':'')+zc+'"><td><span class="pos '+pc+'">'+pos+'</span></td><td class="tl">'+(isDiag?'<strong>'+teamName+'</strong>':teamName)+'</td><td class="pts-b">'+t.pts+'</td><td>'+t.pj+'</td><td>'+t.g+'</td><td>'+t.e+'</td><td>'+t.p+'</td><td>'+t.gf+'</td><td>'+t.gc+'</td><td style="font-weight:600;color:'+(dif>=0?'var(--win)':'var(--loss)')+'">'+(dif>0?'+':'')+dif+'</td><td><div class="last5">'+dots+'</div></td></tr>';
+    var l5=last5ForTeam(t.team);
+    var dots=(l5||[]).map(function(r){return r==='N'?'<div class="l5d l5-N">–</div>':'<div class="l5d l5-'+r+'">'+r+'</div>';}).join('');
+    var teamName=safeText(t.team);
+    return'<tr class="'+(isDiag?'diag':'')+zc+'"><td><span class="pos '+pc+'">'+pos+'</span></td><td class="tl">'+(isDiag?'<strong>'+teamName+'</strong>'+(t.pending?' <span style="font-size:10px;color:var(--draw)">(+1)</span>':''):teamName)+'</td><td class="pts-b">'+t.pts+'</td><td>'+t.j+'</td><td>'+t.g+'</td><td>'+t.e+'</td><td>'+t.p+'</td><td>'+t.gf+'</td><td>'+t.gc+'</td><td style="font-weight:600;color:'+(dif>=0?'var(--win)':'var(--loss)')+'">'+(dif>0?'+':'')+dif+'</td><td><div class="last5">'+dots+'</div></td></tr>';
   }).join('');
 }
 
@@ -874,6 +890,7 @@ var App = {
 window.PLAYERS = window.PLAYERS || {};
 window.MATCHES = window.MATCHES || [];
 window.UPCOMING = window.UPCOMING || [];
+window.STANDINGS = window.STANDINGS || [];
 
 renderResumen();
 renderClasificacion();
@@ -886,7 +903,7 @@ renderAnalisis();
 (function(){
   var el = document.createElement('div');
   el.style.cssText = 'margin-top:32px;padding-top:12px;border-top:1px solid var(--border);color:var(--ink3);font-size:11px;line-height:1.6';
-  el.textContent = 'Los partidos se actualizan manualmente a partir de actas oficiales de la FCF. El proceso se realiza fuera de la aplicación y requiere modificar el archivo de datos. La clasificación se actualiza manualmente tras cada jornada.';
+  el.textContent = 'Los partidos se actualizan manualmente a partir de actas oficiales de la FCF. La clasificación se alimenta desde data/standings.js y debe actualizarse tras cada jornada.';
   document.querySelector('main').appendChild(el);
 })();
 </script>
