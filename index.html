@@ -1,147 +1,193 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diagonal Club Esp. A</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagonal Club Esp. A</title>
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      background:#f5f5f3;
+      margin:0;
+      padding:20px;
+      color:#1a1916;
+    }
 
-<style>
-body{
-  font-family: Arial, sans-serif;
-  background:#f5f5f3;
-  margin:0;
-  padding:20px;
-  color:#1a1916;
-}
+    .container{
+      max-width:1100px;
+      margin:0 auto;
+    }
 
-h1{
-  margin-bottom:5px;
-}
+    h1{
+      margin:0 0 6px 0;
+      font-size:32px;
+    }
 
-.sub{
-  color:#666;
-  margin-bottom:20px;
-}
+    .sub{
+      color:#666;
+      margin-bottom:24px;
+    }
 
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 5px 20px rgba(0,0,0,0.05);
-  margin-bottom:20px;
-}
+    .card{
+      background:#fff;
+      padding:20px;
+      border-radius:12px;
+      box-shadow:0 5px 20px rgba(0,0,0,0.05);
+      margin-bottom:20px;
+    }
 
-.controls{
-  margin-bottom:15px;
-}
+    h2{
+      margin:0 0 16px 0;
+      font-size:22px;
+    }
 
-button{
-  padding:8px 12px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  cursor:pointer;
-  background:white;
-  font-weight:600;
-}
+    .controls{
+      display:flex;
+      gap:10px;
+      margin-bottom:15px;
+    }
 
-button.active{
-  background:#1a3a6b;
-  color:white;
-  border-color:#1a3a6b;
-}
+    button{
+      padding:8px 12px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      cursor:pointer;
+      background:white;
+      font-weight:600;
+    }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-}
+    button.active{
+      background:#1a3a6b;
+      color:white;
+      border-color:#1a3a6b;
+    }
 
-th, td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-}
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
 
-th{
-  font-size:12px;
-  text-transform:uppercase;
-  color:#666;
-}
+    th, td{
+      padding:10px;
+      border-bottom:1px solid #eee;
+      text-align:left;
+    }
 
-tr.diagonal{
-  background:#eef3ff;
-  font-weight:700;
-}
+    th{
+      font-size:12px;
+      text-transform:uppercase;
+      color:#666;
+    }
 
-.badge{
-  padding:4px 8px;
-  border-radius:6px;
-  font-size:12px;
-  font-weight:700;
-}
+    tr.diagonal{
+      background:#eef3ff;
+      font-weight:700;
+    }
 
-.pending{
-  background:#fff4d6;
-  color:#8a6d00;
-}
+    .badge{
+      padding:4px 8px;
+      border-radius:6px;
+      font-size:12px;
+      font-weight:700;
+      display:inline-block;
+    }
 
-.ok{
-  background:#e6f4ea;
-  color:#1a6b3c;
-}
-</style>
+    .pending{
+      background:#fff4d6;
+      color:#8a6d00;
+    }
+
+    .ok{
+      background:#e6f4ea;
+      color:#1a6b3c;
+    }
+
+    .summary{
+      margin-top:10px;
+      color:#555;
+      font-size:14px;
+    }
+
+    @media (max-width: 768px){
+      body{padding:14px}
+      h1{font-size:26px}
+      th, td{padding:8px}
+    }
+  </style>
 </head>
-
 <body>
+  <div class="container">
+    <h1>Diagonal Club Esp. A</h1>
+    <div class="sub">INFANTIL PRIMERA DIVISIÓ S14 · GRUP 9</div>
 
-<h1>Diagonal Club Esp. A</h1>
-<div class="sub">INFANTIL PRIMERA DIVISIÓ S14 · GRUP 9</div>
+    <div class="card">
+      <h2>Clasificación</h2>
 
-<div class="card">
-  <h2>Clasificación</h2>
+      <div class="controls">
+        <button id="btnOfficial" class="active" type="button">Oficial</button>
+        <button id="btnPPG" type="button">PPG</button>
+      </div>
 
-  <div class="controls">
-    <button id="btnOfficial" class="active">Oficial</button>
-    <button id="btnPPG">PPG</button>
+      <div id="standingsTable"></div>
+      <div id="standingsSummary" class="summary"></div>
+    </div>
   </div>
 
-  <div id="standingsTable"></div>
-</div>
+  <script src="data/players.js"></script>
+  <script src="data/matches.js"></script>
+  <script src="data/upcoming.js"></script>
+  <script src="data/standings.js"></script>
+  <script src="update.js"></script>
 
-<!-- DATA FILES -->
-<script src="data/players.js"></script>
-<script src="data/matches.js"></script>
-<script src="data/upcoming.js"></script>
-<script src="data/standings.js"></script>
+  <script>
+    let mode = 'official';
 
-<!-- LOGIC -->
-<script src="update.js"></script>
+    function setActiveButton(id){
+      document.querySelectorAll('.controls button').forEach(btn => btn.classList.remove('active'));
+      const btn = document.getElementById(id);
+      if (btn) btn.classList.add('active');
+    }
 
-<script>
-let mode = "official";
+    function renderSummary(){
+      if (typeof getDiagonalStanding !== 'function' || typeof getPerformanceTable !== 'function' || typeof getOfficialTable !== 'function') {
+        return;
+      }
 
-document.getElementById("btnOfficial").onclick = () => {
-  mode = "official";
-  setActive("btnOfficial");
-  render();
-};
+      const diagonal = getDiagonalStanding();
+      if (!diagonal) {
+        document.getElementById('standingsSummary').textContent = 'No standings data available.';
+        return;
+      }
 
-document.getElementById("btnPPG").onclick = () => {
-  mode = "ppg";
-  setActive("btnPPG");
-  render();
-};
+      const officialPos = getOfficialTable().findIndex(row => row.team === 'DIAGONAL CLUB ESP. A') + 1;
+      const ppgPos = getPerformanceTable().findIndex(row => row.team === 'DIAGONAL CLUB ESP. A') + 1;
 
-function setActive(id){
-  document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
+      document.getElementById('standingsSummary').innerHTML =
+        'Diagonal está <strong>' + officialPos + 'º</strong> en la clasificación oficial y <strong>' +
+        ppgPos + 'º</strong> por PPG. ' +
+        (diagonal.pending ? 'Tiene un partido pendiente.' : 'Tiene el calendario al día.');
+    }
 
-function render(){
-  renderStandingsTable("standingsTable", mode);
-}
+    function renderPage(){
+      if (typeof renderStandingsTable === 'function') {
+        renderStandingsTable('standingsTable', mode);
+      }
+      renderSummary();
+    }
 
-render();
-</script>
+    document.getElementById('btnOfficial').addEventListener('click', function(){
+      mode = 'official';
+      setActiveButton('btnOfficial');
+      renderPage();
+    });
 
+    document.getElementById('btnPPG').addEventListener('click', function(){
+      mode = 'ppg';
+      setActiveButton('btnPPG');
+      renderPage();
+    });
+
+    renderPage();
+  </script>
 </body>
 </html>
