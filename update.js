@@ -1,152 +1,341 @@
-function enrichStandingsRow(row) {
-  return {
-    ...row,
-    gd: (row.gf || 0) - (row.gc || 0),
-    ppg: row.j ? +(row.pts / row.j).toFixed(2) : 0,
-    pending: row.j < 23
-  };
-}
+(function () {
+  'use strict';
 
-function getStandingsData() {
-  if (typeof STANDINGS === 'undefined' || !Array.isArray(STANDINGS)) {
-    return [];
-  }
-  return STANDINGS.map(enrichStandingsRow);
-}
+  const DIAGONAL_NAMES = ['DIAGONAL CLUB ESP. A', 'Diagonal'];
 
-function getOfficialTable() {
-  return [...getStandingsData()].sort((a, b) =>
-    (a.pos || 999) - (b.pos || 999) ||
-    b.pts - a.pts ||
-    b.gd - a.gd ||
-    b.gf - a.gf ||
-    a.team.localeCompare(b.team)
-  );
-}
-
-function getPerformanceTable() {
-  return [...getStandingsData()].sort((a, b) =>
-    b.ppg - a.ppg ||
-    b.pts - a.pts ||
-    b.gd - a.gd ||
-    b.gf - a.gf ||
-    a.team.localeCompare(b.team)
-  );
-}
-
-function getDiagonalStanding() {
-  return getStandingsData().find(row => row.team === 'DIAGONAL CLUB ESP. A') || null;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function getStatusBadge(row) {
-  if (row.pending) {
-    return '<span class="badge pending">Game in hand</span>';
-  }
-  return '<span class="badge ok">Level</span>';
-}
-
-function renderStandingsTable(targetId, mode) {
-  const container = document.getElementById(targetId);
-  if (!container) return;
-
-  const data = mode === 'ppg' ? getPerformanceTable() : getOfficialTable();
-
-  if (!data.length) {
-    container.innerHTML = '<p>No standings data available.</p>';
-    return;
+  function safeArray(value) {
+    return Array.isArray(value) ? value : [];
   }
 
-  container.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Equipo</th>
-          <th>Pts</th>
-          <th>J</th>
-          <th>G</th>
-          <th>E</th>
-          <th>P</th>
-          <th>GF</th>
-          <th>GC</th>
-          <th>DG</th>
-          <th>PPG</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.map((row, idx) => {
-          const rank = mode === 'ppg' ? idx + 1 : row.pos;
-          const isDiagonal = row.team === 'DIAGONAL CLUB ESP. A';
+  function normalizeText(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+  }
 
-          return `
-            <tr class="${isDiagonal ? 'diagonal' : ''}">
-              <td>${rank}</td>
-              <td>${escapeHtml(row.team)}</td>
-              <td>${row.pts}</td>
-              <td>${row.j}</td>
-              <td>${row.g}</td>
-              <td>${row.e}</td>
-              <td>${row.p}</td>
-              <td>${row.gf}</td>
-              <td>${row.gc}</td>
-              <td>${row.gd > 0 ? '+' : ''}${row.gd}</td>
-              <td>${row.ppg.toFixed(2)}</td>
-              <td>${getStatusBadge(row)}</td>
+  function isDiagonalTeamName(name) {
+    const n = normalizeText(name);
+    return DIAGONAL_NAMES.some(team => normalizeText(team) === n) || n.includes('diagonal');
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getAllMatches() {
+    return safeArray(window.MATCHES);
+  }
+
+  function getAllPlayers() {
+    return safeArray(window.PLAYERS);
+  }
+
+  function getUpcomingMatch() {
+    return window.UPCOMING || null;
+  }
+
+  function getAllStandings() {
+    return safeArray(window.STANDINGS);
+  }
+
+  function getMatchPerspective(match) {
+    const homeIsDiagonal = isDiagonalTeamName(match.home);
+    const awayIsDiagonal = isDiagonalTeamName(match.away);
+
+    let gf = 0;
+    let gc = 0;
+    let rival = '';
+    let venue = '';
+    let score = '';
+
+    if (homeIsDiagonal) {
+      gf = Number(match.gf || 0);
+      gc = Number(match.gc || 0);
+      rival = match.away || '';
+      venue = 'C';
+      score = `${gf}-${gc}`;
+    } else if (awayIsDiagonal) {
+      gf = Number(match.gc || 0);
+      gc = Number(match.gf || 0);
+      rival = match.home || '';
+      venue = 'F';
+      score = `${gf}-${gc}`;
+    }
+
+    return {
+      gf,
+      gc,
+      rival,
+      venue,
+      score,
+      result: match.res || '',
+      homeIsDiagonal,
+      awayIsDiagonal
+    };
+  }
+
+  function computeDiagonalStatsFromMatches() {
+    const matches = getAllMatches();
+
+    let wins = 0;
+    let draws = 0;
+    let losses = 0;
+    let gf = 0;
+    let gc = 0;
+
+    matches.forEach(match => {
+      const p = getMatchPerspective(match);
+      gf += p.gf;
+      gc += p.gc;
+
+      if (match.res === 'G') wins += 1;
+      else if (match.res === 'E') draws += 1;
+      else if (match.res === 'P') losses += 1;
+    });
+
+    return {
+      played: matches.length,
+      wins,
+      draws,
+      losses,
+      points: wins * 3 + draws,
+      gf,
+      gc,
+      gd: gf - gc
+    };
+  }
+
+  function enrichStandingsRow(row) {
+    return {
+      ...row,
+      pos: Number(row.pos || 0),
+      pts: Number(row.pts || 0),
+      j: Number(row.j || 0),
+      g: Number(row.g || 0),
+      e: Number(row.e || 0),
+      p: Number(row.p || 0),
+      gf: Number(row.gf || 0),
+      gc: Number(row.gc || 0),
+      gd: Number(row.gf || 0) - Number(row.gc || 0),
+      ppg: Number(row.j || 0) ? +(Number(row.pts || 0) / Number(row.j || 0)).toFixed(2) : 0,
+      pending: Number(row.j || 0) < 23
+    };
+  }
+
+  function getStandingsData() {
+    return getAllStandings().map(enrichStandingsRow);
+  }
+
+  function getOfficialTable() {
+    return [...getStandingsData()].sort((a, b) =>
+      a.pos - b.pos ||
+      b.pts - a.pts ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      a.team.localeCompare(b.team)
+    );
+  }
+
+  function getPerformanceTable() {
+    return [...getStandingsData()].sort((a, b) =>
+      b.ppg - a.ppg ||
+      b.pts - a.pts ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      a.team.localeCompare(b.team)
+    );
+  }
+
+  function getDiagonalStanding() {
+    return getStandingsData().find(row => isDiagonalTeamName(row.team)) || null;
+  }
+
+  function getStatusBadge(row) {
+    if (row.pending) {
+      return '<span class="badge pending">Game in hand</span>';
+    }
+    return '<span class="badge good">Level</span>';
+  }
+
+  function renderStandingsTable(targetId, mode = 'official') {
+    const container = document.getElementById(targetId);
+    if (!container) return;
+
+    const data = mode === 'ppg' ? getPerformanceTable() : getOfficialTable();
+
+    if (!data.length) {
+      container.innerHTML = '<div class="empty">No standings data available.</div>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Equipo</th>
+              <th>Pts</th>
+              <th>J</th>
+              <th>G</th>
+              <th>E</th>
+              <th>P</th>
+              <th>GF</th>
+              <th>GC</th>
+              <th>DG</th>
+              <th>PPG</th>
+              <th>Estado</th>
             </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
-}
+          </thead>
+          <tbody>
+            ${data.map((row, idx) => {
+              const rank = mode === 'ppg' ? idx + 1 : row.pos;
+              const diagonalClass = isDiagonalTeamName(row.team) ? 'diagonal' : '';
+              return `
+                <tr class="${diagonalClass}">
+                  <td>${rank}</td>
+                  <td>${escapeHtml(row.team)}</td>
+                  <td><strong>${row.pts}</strong></td>
+                  <td>${row.j}</td>
+                  <td>${row.g}</td>
+                  <td>${row.e}</td>
+                  <td>${row.p}</td>
+                  <td>${row.gf}</td>
+                  <td>${row.gc}</td>
+                  <td>${row.gd > 0 ? '+' : ''}${row.gd}</td>
+                  <td>${row.ppg.toFixed(2)}</td>
+                  <td>${getStatusBadge(row)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
 
-function simulateDiagonalScenario(extraPoints) {
-  const simulated = getStandingsData().map(row => ({ ...row }));
-  const diagonal = simulated.find(row => row.team === 'DIAGONAL CLUB ESP. A');
+  function getRecentDiagonalMatches(limit = 5) {
+    return [...getAllMatches()].slice(-limit).reverse().map(match => {
+      const p = getMatchPerspective(match);
+      return {
+        ...match,
+        diagonalGf: p.gf,
+        diagonalGc: p.gc,
+        rival: p.rival,
+        venue: p.venue,
+        score: p.score
+      };
+    });
+  }
 
-  if (!diagonal) return null;
+  function getTopScorers(limit = 12) {
+    const players = getAllPlayers();
+    const goalsByPlayer = {};
 
-  diagonal.j += 1;
-  diagonal.pts += extraPoints;
+    getAllMatches().forEach(match => {
+      safeArray(match.goals).forEach(goal => {
+        if (goal.type === 'gf' && goal.playerId) {
+          goalsByPlayer[goal.playerId] = (goalsByPlayer[goal.playerId] || 0) + 1;
+        }
+      });
+    });
 
-  if (extraPoints === 3) diagonal.g += 1;
-  else if (extraPoints === 1) diagonal.e += 1;
-  else diagonal.p += 1;
+    return players
+      .map(player => ({
+        id: player.id,
+        name: player.name || player.nom || player.player || player.id || '',
+        number: player.number || player.dorsal || '',
+        goals: goalsByPlayer[player.id] || 0
+      }))
+      .sort((a, b) => b.goals - a.goals || String(a.name).localeCompare(String(b.name)))
+      .slice(0, limit);
+  }
 
-  diagonal.gd = diagonal.gf - diagonal.gc;
-  diagonal.ppg = diagonal.j ? +(diagonal.pts / diagonal.j).toFixed(2) : 0;
-  diagonal.pending = diagonal.j < 23;
+  function getRefereeStats() {
+    const refs = {};
 
-  const officialSorted = [...simulated].sort((a, b) =>
-    b.pts - a.pts ||
-    b.gd - a.gd ||
-    b.gf - a.gf ||
-    a.team.localeCompare(b.team)
-  );
+    getAllMatches().forEach(match => {
+      const name = match.ref || 'Unknown';
+      if (!refs[name]) {
+        refs[name] = { name, matches: 0, wins: 0, draws: 0, losses: 0 };
+      }
 
-  const ppgSorted = [...simulated].sort((a, b) =>
-    b.ppg - a.ppg ||
-    b.pts - a.pts ||
-    b.gd - a.gd ||
-    b.gf - a.gf ||
-    a.team.localeCompare(b.team)
-  );
+      refs[name].matches += 1;
 
-  return {
-    pts: diagonal.pts,
-    j: diagonal.j,
-    ppg: diagonal.ppg,
-    officialPos: officialSorted.findIndex(row => row.team === diagonal.team) + 1,
-    ppgPos: ppgSorted.findIndex(row => row.team === diagonal.team) + 1
-  };
-}
+      if (match.res === 'G') refs[name].wins += 1;
+      else if (match.res === 'E') refs[name].draws += 1;
+      else if (match.res === 'P') refs[name].losses += 1;
+    });
+
+    return Object.values(refs).sort((a, b) =>
+      b.matches - a.matches ||
+      a.name.localeCompare(b.name)
+    );
+  }
+
+  function simulateDiagonalScenario(extraPoints) {
+    const simulated = getStandingsData().map(row => ({ ...row }));
+    const diagonal = simulated.find(row => isDiagonalTeamName(row.team));
+
+    if (!diagonal) return null;
+
+    diagonal.j += 1;
+    diagonal.pts += extraPoints;
+
+    if (extraPoints === 3) diagonal.g += 1;
+    else if (extraPoints === 1) diagonal.e += 1;
+    else diagonal.p += 1;
+
+    diagonal.gd = diagonal.gf - diagonal.gc;
+    diagonal.ppg = diagonal.j ? +(diagonal.pts / diagonal.j).toFixed(2) : 0;
+    diagonal.pending = diagonal.j < 23;
+
+    const officialSorted = [...simulated].sort((a, b) =>
+      b.pts - a.pts ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      a.team.localeCompare(b.team)
+    );
+
+    const ppgSorted = [...simulated].sort((a, b) =>
+      b.ppg - a.ppg ||
+      b.pts - a.pts ||
+      b.gd - a.gd ||
+      b.gf - a.gf ||
+      a.team.localeCompare(b.team)
+    );
+
+    return {
+      pts: diagonal.pts,
+      j: diagonal.j,
+      ppg: diagonal.ppg,
+      officialPos: officialSorted.findIndex(row => isDiagonalTeamName(row.team)) + 1,
+      ppgPos: ppgSorted.findIndex(row => isDiagonalTeamName(row.team)) + 1
+    };
+  }
+
+  window.safeArray = safeArray;
+  window.escapeHtml = escapeHtml;
+  window.getAllMatches = getAllMatches;
+  window.getAllPlayers = getAllPlayers;
+  window.getUpcomingMatch = getUpcomingMatch;
+  window.getMatchPerspective = getMatchPerspective;
+  window.computeDiagonalStatsFromMatches = computeDiagonalStatsFromMatches;
+  window.enrichStandingsRow = enrichStandingsRow;
+  window.getStandingsData = getStandingsData;
+  window.getOfficialTable = getOfficialTable;
+  window.getPerformanceTable = getPerformanceTable;
+  window.getDiagonalStanding = getDiagonalStanding;
+  window.renderStandingsTable = renderStandingsTable;
+  window.getRecentDiagonalMatches = getRecentDiagonalMatches;
+  window.getTopScorers = getTopScorers;
+  window.getRefereeStats = getRefereeStats;
+  window.simulateDiagonalScenario = simulateDiagonalScenario;
+})();
