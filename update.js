@@ -113,19 +113,24 @@
   }
 
   function enrichStandingsRow(row) {
+    const pts = Number(row.pts || 0);
+    const j = Number(row.j || 0);
+    const gf = Number(row.gf || 0);
+    const gc = Number(row.gc || 0);
+
     return {
       ...row,
       pos: Number(row.pos || 0),
-      pts: Number(row.pts || 0),
-      j: Number(row.j || 0),
+      pts,
+      j,
       g: Number(row.g || 0),
       e: Number(row.e || 0),
       p: Number(row.p || 0),
-      gf: Number(row.gf || 0),
-      gc: Number(row.gc || 0),
-      gd: Number(row.gf || 0) - Number(row.gc || 0),
-      ppg: Number(row.j || 0) ? +(Number(row.pts || 0) / Number(row.j || 0)).toFixed(2) : 0,
-      pending: Number(row.j || 0) < 23
+      gf,
+      gc,
+      gd: gf - gc,
+      ppg: j ? +(pts / j).toFixed(2) : 0,
+      pending: j < 23
     };
   }
 
@@ -139,7 +144,7 @@
       b.pts - a.pts ||
       b.gd - a.gd ||
       b.gf - a.gf ||
-      a.team.localeCompare(b.team)
+      String(a.team || '').localeCompare(String(b.team || ''))
     );
   }
 
@@ -149,7 +154,7 @@
       b.pts - a.pts ||
       b.gd - a.gd ||
       b.gf - a.gf ||
-      a.team.localeCompare(b.team)
+      String(a.team || '').localeCompare(String(b.team || ''))
     );
   }
 
@@ -263,6 +268,7 @@
 
     getAllMatches().forEach(match => {
       const name = match.ref || 'Unknown';
+
       if (!refs[name]) {
         refs[name] = { name, matches: 0, wins: 0, draws: 0, losses: 0 };
       }
