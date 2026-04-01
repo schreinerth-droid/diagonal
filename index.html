@@ -284,11 +284,26 @@ function getDiagonalStandingRow(){
   return null;
 }
 
+function normalizeTeamName(s){
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 function last5ForTeam(name){
   if (!window.STANDINGS || !Array.isArray(window.STANDINGS)) return ['N','N','N','N','N'];
-  var row = window.STANDINGS.find(function(r){ return String(r.team||'')===String(name||''); });
+
+  var target = normalizeTeamName(name);
+
+  var row = window.STANDINGS.find(function(r){
+    return normalizeTeamName(r.team) === target;
+  });
+
   if (row && Array.isArray(row.last5)) return row.last5;
   if (row && Array.isArray(row.l5)) return row.l5;
+
   return ['N','N','N','N','N'];
 }
 
