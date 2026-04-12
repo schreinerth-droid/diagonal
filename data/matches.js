@@ -153,8 +153,8 @@ var MATCHES = [
 
   {j:24,date:'2026-04-11',loc:'F',home:'Pª Barc. Anguera C',away:'Diagonal',gf:2,gc:4,res:'P',
    ref:'Redondo Carrera, Benjamin',refDel:'Barcelona1',
-   titulars:[],
-   suplents:[],
+   titulars:[{id:'jose',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'lukas',d:12},{id:'bruno',d:17},{id:'yannick',d:18},{id:'luca',d:19},{id:'mihail',d:29},{id:'santiago',d:77}],
+   suplents:[{id:'marin',d:2},{id:'fj',d:7},{id:'otto',d:10},{id:'jorge',d:11},{id:'santi_e',d:76}],
    goals:[{min:4,type:'gf',playerId:'yannick'},{min:23,type:'gf',playerId:'santiago'},{min:22,type:'gc',playerId:null},{min:28,type:'gc',playerId:null},{min:36,type:'gc',playerId:null},{min:60,type:'gc',playerId:null}],
    yellows:[],reds:[]}
 ];
