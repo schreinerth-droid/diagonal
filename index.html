@@ -245,16 +245,10 @@ function maxN(a){return a.reduce(function(x,y){return x>y?x:y;},0);}
 function maxStreak(arr,fn){var mx=0,c=0;arr.forEach(function(m){c=fn(m)?c+1:0;if(c>mx)mx=c;});return mx;}
 function tramo(m){if(m<=12)return 0;if(m<=24)return 1;if(m<=35)return 2;if(m<=47)return 3;if(m<=59)return 4;return 5;}
 function rl(r){return{G:'V',E:'E',P:'D'}[r]||'?';}
-function upcomingTeams(u){
-  var rival=safeText(u.rival);
-  return u.home
-    ? '<span class="uprow-our">Diagonal</span> vs ' + rival
-    : rival + ' vs <span class="uprow-our">Diagonal</span>';
-}
 function arow(l,v){return'<div class="arow"><span class="arow-lbl">'+l+'</span><span class="arow-val">'+v+'</span></div>';}
 function stCard(v,l,c){return'<div class="stat-card"><div class="stat-v"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div><div class="stat-l">'+l+'</div></div>';}
 function bbar(l,v,mx,c){var p=mx>0?Math.round(v/mx*100):0;return'<div class="bbar"><span class="bbar-lbl">'+l+'</span><div class="bbar-track"><div class="bbar-fill" style="width:'+p+'%;background:'+c+'"></div></div><span class="bbar-val" style="color:'+c+'">'+v+'</span></div>';}
-function fmtDate(d){var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function fmtDate(d){var p=String(d||'').split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(d||'');}
 function safeText(v){
   return String(v==null?'':v)
     .replaceAll('&','&amp;')
@@ -263,15 +257,57 @@ function safeText(v){
     .replaceAll('"','&quot;')
     .replaceAll("'",'&#39;');
 }
+function toTime(d){
+  var t = new Date(d).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+function compareByDateThenJ(a,b){
+  var da = toTime(a.date), db = toTime(b.date);
+  if(da !== db) return da - db;
+  return Number(a.j||0) - Number(b.j||0);
+}
+function getSortedMatches(){
+  return (window.MATCHES || []).slice().sort(compareByDateThenJ);
+}
+function getMatchesDesc(){
+  return getSortedMatches().slice().reverse();
+}
+function upcomingTeams(u){
+  var rival=safeText(u.rival);
+  return u.home
+    ? '<span class="uprow-our">Diagonal</span> vs ' + rival
+    : rival + ' vs <span class="uprow-our">Diagonal</span>';
+}
+function getPendingUpcoming(){
+  if(typeof getUpcomingMatches === 'function') return getUpcomingMatches();
+  var pjs = (window.MATCHES || []).map(function(m){ return Number(m.j||0); });
+  return (window.UPCOMING || [])
+    .filter(function(u){ return pjs.indexOf(Number(u.j||0)) === -1; })
+    .slice()
+    .sort(compareByDateThenJ);
+}
+function getNextUpcoming(){
+  if(typeof getUpcomingMatch === 'function') return getUpcomingMatch();
+  var pend = getPendingUpcoming();
+  return pend[0] || null;
+}
+function getRemainingUpcoming(){
+  if(typeof getRemainingUpcomingMatches === 'function') return getRemainingUpcomingMatches();
+  return getPendingUpcoming().slice(1);
+}
 
 function getStandingsRows(){
   if (typeof getOfficialTable === 'function') return getOfficialTable();
   if (!window.STANDINGS || !Array.isArray(window.STANDINGS)) return [];
   return window.STANDINGS.slice().map(function(r){
     var gf=Number(r.gf||0), gc=Number(r.gc||0), pts=Number(r.pts||0), j=Number(r.j||0);
+    var totalJ = 0;
+    (window.MATCHES || []).forEach(function(m){ totalJ = Math.max(totalJ, Number(m.j||0)); });
+    (window.UPCOMING || []).forEach(function(m){ totalJ = Math.max(totalJ, Number(m.j||0)); });
+    (window.STANDINGS || []).forEach(function(m){ totalJ = Math.max(totalJ, Number(m.j||0)); });
     return {
       pos:Number(r.pos||0), team:r.team, pts:pts, j:j, g:Number(r.g||0), e:Number(r.e||0), p:Number(r.p||0),
-      gf:gf, gc:gc, gd:gf-gc, ppg:j?+(pts/j).toFixed(2):0, pending:j<23
+      gf:gf, gc:gc, gd:gf-gc, ppg:j?+(pts/j).toFixed(2):0, pending:totalJ>0 && j<totalJ
     };
   }).sort(function(a,b){return a.pos-b.pos;});
 }
@@ -323,12 +359,12 @@ function buildPlayers(){
 }
 
 function renderResumen(){
-  var pl=MATCHES,n=pl.length;
+  var pl=getSortedMatches(),n=pl.length;
   var w=pl.filter(function(m){return m.res==='G';}).length;
   var d=pl.filter(function(m){return m.res==='E';}).length;
   var l=pl.filter(function(m){return m.res==='P';}).length;
-  var gf=sum(pl,function(m){return m.gf;});
-  var gc=sum(pl,function(m){return m.gc;});
+  var gf=sum(pl,function(m){return Number(m.gf||0);});
+  var gc=sum(pl,function(m){return Number(m.gc||0);});
   var pts=w*3+d;
   document.getElementById('hdr-pts').textContent=pts;
   ['k-pts','k-w','k-d','k-l','k-gf','k-gc'].forEach(function(id,i){document.getElementById(id).textContent=[pts,w,d,l,gf,gc][i];});
@@ -366,7 +402,7 @@ function renderResumen(){
 
   var svg=document.getElementById('goals-chart');
   var W=820,H=140,px=28,py=12,base=H-py-18;
-  var allG=pl.reduce(function(a,m){return a.concat([m.gf,m.gc]);},[]);
+  var allG=pl.reduce(function(a,m){return a.concat([Number(m.gf||0),Number(m.gc||0)]);},[]);
   var mx=Math.max.apply(null,allG.concat([3]))+1,ch='';
   for(var v=0;v<=mx;v++){
     var y=base-(v/mx)*(H-2*py-18);
@@ -375,8 +411,8 @@ function renderResumen(){
   }
   pl.forEach(function(m,i){
     var cx=px+(i+0.5)*((W-2*px)/n), sw=(W-2*px)/n, bw=sw*0.26;
-    if(m.gf>0)ch+='<rect x="'+(cx-bw-1)+'" y="'+(base-(m.gf/mx)*(H-2*py-18))+'" width="'+bw+'" height="'+((m.gf/mx)*(H-2*py-18))+'" fill="var(--accent)" opacity=".8" rx="2"/>';
-    if(m.gc>0)ch+='<rect x="'+(cx+1)+'" y="'+(base-(m.gc/mx)*(H-2*py-18))+'" width="'+bw+'" height="'+((m.gc/mx)*(H-2*py-18))+'" fill="#8b1a1a" opacity=".4" rx="2"/>';
+    if(Number(m.gf||0)>0)ch+='<rect x="'+(cx-bw-1)+'" y="'+(base-(Number(m.gf||0)/mx)*(H-2*py-18))+'" width="'+bw+'" height="'+((Number(m.gf||0)/mx)*(H-2*py-18))+'" fill="var(--accent)" opacity=".8" rx="2"/>';
+    if(Number(m.gc||0)>0)ch+='<rect x="'+(cx+1)+'" y="'+(base-(Number(m.gc||0)/mx)*(H-2*py-18))+'" width="'+bw+'" height="'+((Number(m.gc||0)/mx)*(H-2*py-18))+'" fill="#8b1a1a" opacity=".4" rx="2"/>';
     var dc=m.res==='G'?'#1a6b3c':m.res==='E'?'#7a5f1a':'#8b1a1a';
     ch+='<circle cx="'+cx+'" cy="'+(base+7)+'" r="3" fill="'+dc+'"/>';
     ch+='<text x="'+cx+'" y="'+(H-1)+'" text-anchor="middle" fill="#9a9690" font-size="9">J'+m.j+'</text>';
@@ -424,11 +460,9 @@ function renderClasificacion(){
 }
 
 function renderProximos(){
-  var pjs = MATCHES.map(function(m){ return m.j; });
-  var pend = UPCOMING
-    .filter(function(u){ return pjs.indexOf(u.j) === -1; })
-    .sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
-  var next = pend[0] || null;
+  var pend = getPendingUpcoming();
+  var next = getNextUpcoming();
+  var rest = getRemainingUpcoming();
   var nc = document.getElementById('next-match');
 
   if(next){
@@ -447,7 +481,7 @@ function renderProximos(){
   }
 
   document.getElementById('upcoming-rest').innerHTML =
-    pend.slice(1).map(function(u){
+    rest.map(function(u){
       return '<div class="uprow">' +
         '<div class="uprow-j">J' + u.j + '</div>' +
         '<span class="loc-badge ' + (u.home ? 'loc-C' : 'loc-F') + '">' + (u.home ? 'Casa' : 'Fuera') + '</span>' +
@@ -472,7 +506,7 @@ function renderProximos(){
 }
 
 function renderPartidos(){
-  document.getElementById('partidos-list').innerHTML=MATCHES.slice().reverse().map(function(m){
+  document.getElementById('partidos-list').innerHTML=getMatchesDesc().map(function(m){
     var isC=m.loc==='C';
     var loc=isC?'<span class="our">Diagonal</span>':safeText(m.home);
     var vis=isC?safeText(m.away):'<span class="our">Diagonal</span>';
@@ -516,14 +550,14 @@ function renderArbitros(){
 }
 
 function renderAnalisis(){
-  var pl=MATCHES,n=pl.length;
+  var pl=getSortedMatches(),n=pl.length;
   var w=pl.filter(function(m){return m.res==='G';}).length;
   var d=pl.filter(function(m){return m.res==='E';}).length;
-  var gf=sum(pl,function(m){return m.gf;});
-  var gc=sum(pl,function(m){return m.gc;});
+  var gf=sum(pl,function(m){return Number(m.gf||0);});
+  var gc=sum(pl,function(m){return Number(m.gc||0);});
   var pts=w*3+d;
-  var cs=pl.filter(function(m){return m.gc===0;}).length;
-  var both=pl.filter(function(m){return m.gf>0&&m.gc>0;}).length;
+  var cs=pl.filter(function(m){return Number(m.gc||0)===0;}).length;
+  var both=pl.filter(function(m){return Number(m.gf||0)>0&&Number(m.gc||0)>0;}).length;
   var ag=[];pl.forEach(function(m){(m.goals||[]).forEach(function(g){ag.push(g);});});
   var gfH1=ag.filter(function(g){return g.type==='gf'&&g.min<=45;}).length;
   var gfH2=ag.filter(function(g){return g.type==='gf'&&g.min>45;}).length;
@@ -538,7 +572,7 @@ function renderAnalisis(){
   var players=buildPlayers();
   var totY=sum(players,function(p){return p.yellows;});
   var totR=sum(players,function(p){return p.reds;});
-  var pend=UPCOMING.filter(function(u){return pl.map(function(m){return m.j;}).indexOf(u.j)===-1;}).length;
+  var pend=getPendingUpcoming().length;
   var proy=n?Math.round(pts+(pts/n)*pend):0;
 
   document.getElementById('anl-stats').innerHTML=
@@ -652,8 +686,8 @@ function renderAnalisis(){
     if(!hn)return{n:0,pts:0,gf:0,gc:0,w:0,winPct:0,ptsPM:0,gfPM:0,gcPM:0};
     var hw=arr.filter(function(m){return m.res==='G';}).length;
     var hd=arr.filter(function(m){return m.res==='E';}).length;
-    var hgf=sum(arr,function(m){return m.gf;});
-    var hgc=sum(arr,function(m){return m.gc;});
+    var hgf=sum(arr,function(m){return Number(m.gf||0);});
+    var hgc=sum(arr,function(m){return Number(m.gc||0);});
     var hpts=hw*3+hd;
     return{n:hn,pts:hpts,gf:hgf,gc:hgc,w:hw,winPct:Math.round(hw/hn*100),ptsPM:hpts/hn,gfPM:hgf/hn,gcPM:hgc/hn};
   }
@@ -688,7 +722,7 @@ function renderAnalisis(){
     if(!key) return;
     if(!byMonth[key]) byMonth[key]={key:key,pj:0,w:0,d:0,l:0,gf:0,gc:0};
     var b=byMonth[key];
-    b.pj++; b.gf+=m.gf; b.gc+=m.gc;
+    b.pj++; b.gf+=Number(m.gf||0); b.gc+=Number(m.gc||0);
     if(m.res==='G') b.w++; else if(m.res==='E') b.d++; else b.l++;
   });
   var months=Object.keys(byMonth).sort();
@@ -833,7 +867,7 @@ function renderAnalisis(){
     if(!impMap[pid]||!impMap[pid].tit.length) return '';
     var ms=impMap[pid].tit;
     var r=recOf(ms);
-    var gcpm=(sum(ms,function(m){return m.gc;})/ms.length).toFixed(1);
+    var gcpm=(sum(ms,function(m){return Number(m.gc||0);})/ms.length).toFixed(1);
     var bg=i%2===0?'':'background:var(--surface2)';
     var tc=r.pct>=56?'color:var(--win)':r.pct<=33?'color:var(--loss)':'';
     return'<tr style="'+bg+'">'+
@@ -857,7 +891,7 @@ function renderAnalisis(){
     '</tr></thead><tbody>';
   document.getElementById('anl-gk').innerHTML=gkThead+['steven','jose','redon'].map(gkRow).join('')+'</tbody></table>';
 
-  var pls=pl.slice().sort(function(a,b){return a.j-b.j;});
+  var pls=pl.slice().sort(function(a,b){return Number(a.j||0)-Number(b.j||0);});
   var stabBuckets=[{lbl:'0–2 cambios',ms:[]},{lbl:'3–5 cambios',ms:[]},{lbl:'6+ cambios',ms:[]}];
   for(var si=1;si<pls.length;si++){
     var prv=pls[si-1],cur=pls[si];
