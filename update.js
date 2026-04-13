@@ -2,6 +2,7 @@
   'use strict';
 
   const DIAGONAL_NAMES = ['DIAGONAL CLUB ESP. A', 'Diagonal'];
+  const TOTAL_MATCHDAYS = 24;
 
   function safeArray(value) {
     return Array.isArray(value) ? value : [];
@@ -34,15 +35,56 @@
   }
 
   function getAllPlayers() {
-    return safeArray(window.PLAYERS);
+    const src = window.PLAYERS;
+
+    if (Array.isArray(src)) {
+      return src.map(function (player, index) {
+        return {
+          id: player.id || player.playerId || String(index),
+          ...player
+        };
+      });
+    }
+
+    if (src && typeof src === 'object') {
+      return Object.keys(src).map(function (id) {
+        const player = src[id] || {};
+        return {
+          id: id,
+          ...player
+        };
+      });
+    }
+
+    return [];
+  }
+
+  function getUpcomingMatches() {
+    return safeArray(window.UPCOMING);
   }
 
   function getUpcomingMatch() {
-    return window.UPCOMING || null;
+    const playedJs = getAllMatches().map(function (m) {
+      return Number(m.j || 0);
+    });
+
+    const pending = getUpcomingMatches()
+      .filter(function (u) {
+        return playedJs.indexOf(Number(u.j || 0)) === -1;
+      })
+      .sort(function (a, b) {
+        return new Date(a.date) - new Date(b.date);
+      });
+
+    return pending[0] || null;
   }
 
   function getAllStandings() {
     return safeArray(window.STANDINGS);
+  }
+
+  function getPendingFlag(j) {
+    return Number(j || 0) < TOTAL_MATCHDAYS;
   }
 
   function getMatchPerspective(match) {
@@ -60,24 +102,24 @@
       gc = Number(match.gc || 0);
       rival = match.away || '';
       venue = 'C';
-      score = `${gf}-${gc}`;
+      score = gf + '-' + gc;
     } else if (awayIsDiagonal) {
       gf = Number(match.gc || 0);
       gc = Number(match.gf || 0);
       rival = match.home || '';
       venue = 'F';
-      score = `${gf}-${gc}`;
+      score = gf + '-' + gc;
     }
 
     return {
-      gf,
-      gc,
-      rival,
-      venue,
-      score,
+      gf: gf,
+      gc: gc,
+      rival: rival,
+      venue: venue,
+      score: score,
       result: match.res || '',
-      homeIsDiagonal,
-      awayIsDiagonal
+      homeIsDiagonal: homeIsDiagonal,
+      awayIsDiagonal: awayIsDiagonal
     };
   }
 
@@ -90,8 +132,11 @@
     let gf = 0;
     let gc = 0;
 
-    matches.forEach(match => {
+    matches.forEach(function (match) {
       const p = getMatchPerspective(match);
+
+      if (!p.homeIsDiagonal && !p.awayIsDiagonal) return;
+
       gf += p.gf;
       gc += p.gc;
 
@@ -101,13 +146,13 @@
     });
 
     return {
-      played: matches.length,
-      wins,
-      draws,
-      losses,
+      played: wins + draws + losses,
+      wins: wins,
+      draws: draws,
+      losses: losses,
       points: wins * 3 + draws,
-      gf,
-      gc,
+      gf: gf,
+      gc: gc,
       gd: gf - gc
     };
   }
@@ -121,16 +166,16 @@
     return {
       ...row,
       pos: Number(row.pos || 0),
-      pts,
-      j,
+      pts: pts,
+      j: j,
       g: Number(row.g || 0),
       e: Number(row.e || 0),
       p: Number(row.p || 0),
-      gf,
-      gc,
+      gf: gf,
+      gc: gc,
       gd: gf - gc,
       ppg: j ? +(pts / j).toFixed(2) : 0,
-      pending: j < 23
+      pending: getPendingFlag(j)
     };
   }
 
@@ -139,27 +184,33 @@
   }
 
   function getOfficialTable() {
-    return [...getStandingsData()].sort((a, b) =>
-      a.pos - b.pos ||
-      b.pts - a.pts ||
-      b.gd - a.gd ||
-      b.gf - a.gf ||
-      String(a.team || '').localeCompare(String(b.team || ''))
-    );
+    return getStandingsData().slice().sort(function (a, b) {
+      return (
+        a.pos - b.pos ||
+        b.pts - a.pts ||
+        b.gd - a.gd ||
+        b.gf - a.gf ||
+        String(a.team || '').localeCompare(String(b.team || ''))
+      );
+    });
   }
 
   function getPerformanceTable() {
-    return [...getStandingsData()].sort((a, b) =>
-      b.ppg - a.ppg ||
-      b.pts - a.pts ||
-      b.gd - a.gd ||
-      b.gf - a.gf ||
-      String(a.team || '').localeCompare(String(b.team || ''))
-    );
+    return getStandingsData().slice().sort(function (a, b) {
+      return (
+        b.ppg - a.ppg ||
+        b.pts - a.pts ||
+        b.gd - a.gd ||
+        b.gf - a.gf ||
+        String(a.team || '').localeCompare(String(b.team || ''))
+      );
+    });
   }
 
   function getDiagonalStanding() {
-    return getStandingsData().find(row => isDiagonalTeamName(row.team)) || null;
+    return getStandingsData().find(function (row) {
+      return isDiagonalTeamName(row.team);
+    }) || null;
   }
 
   function getStatusBadge(row) {
@@ -169,7 +220,7 @@
     return '<span class="badge good">Level</span>';
   }
 
-  function renderStandingsTable(targetId, mode = 'official') {
+  function renderStandingsTable(targetId, mode) {
     const container = document.getElementById(targetId);
     if (!container) return;
 
@@ -180,72 +231,81 @@
       return;
     }
 
-    container.innerHTML = `
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Equipo</th>
-              <th>Pts</th>
-              <th>J</th>
-              <th>G</th>
-              <th>E</th>
-              <th>P</th>
-              <th>GF</th>
-              <th>GC</th>
-              <th>DG</th>
-              <th>PPG</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${data.map((row, idx) => {
+    container.innerHTML =
+      '<div class="table-wrap">' +
+        '<table>' +
+          '<thead>' +
+            '<tr>' +
+              '<th>#</th>' +
+              '<th>Equipo</th>' +
+              '<th>Pts</th>' +
+              '<th>J</th>' +
+              '<th>G</th>' +
+              '<th>E</th>' +
+              '<th>P</th>' +
+              '<th>GF</th>' +
+              '<th>GC</th>' +
+              '<th>DG</th>' +
+              '<th>PPG</th>' +
+              '<th>Estado</th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody>' +
+            data.map(function (row, idx) {
               const rank = mode === 'ppg' ? idx + 1 : row.pos;
               const diagonalClass = isDiagonalTeamName(row.team) ? 'diagonal' : '';
-              return `
-                <tr class="${diagonalClass}">
-                  <td>${rank}</td>
-                  <td>${escapeHtml(row.team)}</td>
-                  <td><strong>${row.pts}</strong></td>
-                  <td>${row.j}</td>
-                  <td>${row.g}</td>
-                  <td>${row.e}</td>
-                  <td>${row.p}</td>
-                  <td>${row.gf}</td>
-                  <td>${row.gc}</td>
-                  <td>${row.gd > 0 ? '+' : ''}${row.gd}</td>
-                  <td>${row.ppg.toFixed(2)}</td>
-                  <td>${getStatusBadge(row)}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
+              return (
+                '<tr class="' + diagonalClass + '">' +
+                  '<td>' + rank + '</td>' +
+                  '<td>' + escapeHtml(row.team) + '</td>' +
+                  '<td><strong>' + row.pts + '</strong></td>' +
+                  '<td>' + row.j + '</td>' +
+                  '<td>' + row.g + '</td>' +
+                  '<td>' + row.e + '</td>' +
+                  '<td>' + row.p + '</td>' +
+                  '<td>' + row.gf + '</td>' +
+                  '<td>' + row.gc + '</td>' +
+                  '<td>' + (row.gd > 0 ? '+' : '') + row.gd + '</td>' +
+                  '<td>' + row.ppg.toFixed(2) + '</td>' +
+                  '<td>' + getStatusBadge(row) + '</td>' +
+                '</tr>'
+              );
+            }).join('') +
+          '</tbody>' +
+        '</table>' +
+      '</div>';
   }
 
-  function getRecentDiagonalMatches(limit = 5) {
-    return [...getAllMatches()].slice(-limit).reverse().map(match => {
-      const p = getMatchPerspective(match);
-      return {
-        ...match,
-        diagonalGf: p.gf,
-        diagonalGc: p.gc,
-        rival: p.rival,
-        venue: p.venue,
-        score: p.score
-      };
-    });
+  function getRecentDiagonalMatches(limit) {
+    const max = Number(limit || 5);
+
+    return getAllMatches()
+      .filter(function (match) {
+        const p = getMatchPerspective(match);
+        return p.homeIsDiagonal || p.awayIsDiagonal;
+      })
+      .slice(-max)
+      .reverse()
+      .map(function (match) {
+        const p = getMatchPerspective(match);
+        return {
+          ...match,
+          diagonalGf: p.gf,
+          diagonalGc: p.gc,
+          rival: p.rival,
+          venue: p.venue,
+          score: p.score
+        };
+      });
   }
 
-  function getTopScorers(limit = 12) {
+  function getTopScorers(limit) {
+    const max = Number(limit || 12);
     const players = getAllPlayers();
     const goalsByPlayer = {};
 
-    getAllMatches().forEach(match => {
-      safeArray(match.goals).forEach(goal => {
+    getAllMatches().forEach(function (match) {
+      safeArray(match.goals).forEach(function (goal) {
         if (goal.type === 'gf' && goal.playerId) {
           goalsByPlayer[goal.playerId] = (goalsByPlayer[goal.playerId] || 0) + 1;
         }
@@ -253,24 +313,34 @@
     });
 
     return players
-      .map(player => ({
-        id: player.id,
-        name: player.name || player.nom || player.player || player.id || '',
-        number: player.number || player.dorsal || '',
-        goals: goalsByPlayer[player.id] || 0
-      }))
-      .sort((a, b) => b.goals - a.goals || String(a.name).localeCompare(String(b.name)))
-      .slice(0, limit);
+      .map(function (player) {
+        return {
+          id: player.id,
+          name: player.name || player.nom || player.player || player.id || '',
+          number: player.activeDorsal || player.number || player.dorsal || '',
+          goals: goalsByPlayer[player.id] || 0
+        };
+      })
+      .sort(function (a, b) {
+        return b.goals - a.goals || String(a.name).localeCompare(String(b.name));
+      })
+      .slice(0, max);
   }
 
   function getRefereeStats() {
     const refs = {};
 
-    getAllMatches().forEach(match => {
+    getAllMatches().forEach(function (match) {
       const name = match.ref || 'Unknown';
 
       if (!refs[name]) {
-        refs[name] = { name, matches: 0, wins: 0, draws: 0, losses: 0 };
+        refs[name] = {
+          name: name,
+          matches: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0
+        };
       }
 
       refs[name].matches += 1;
@@ -280,20 +350,24 @@
       else if (match.res === 'P') refs[name].losses += 1;
     });
 
-    return Object.values(refs).sort((a, b) =>
-      b.matches - a.matches ||
-      a.name.localeCompare(b.name)
-    );
+    return Object.values(refs).sort(function (a, b) {
+      return b.matches - a.matches || a.name.localeCompare(b.name);
+    });
   }
 
   function simulateDiagonalScenario(extraPoints) {
-    const simulated = getStandingsData().map(row => ({ ...row }));
-    const diagonal = simulated.find(row => isDiagonalTeamName(row.team));
+    const simulated = getStandingsData().map(function (row) {
+      return { ...row };
+    });
+
+    const diagonal = simulated.find(function (row) {
+      return isDiagonalTeamName(row.team);
+    });
 
     if (!diagonal) return null;
 
     diagonal.j += 1;
-    diagonal.pts += extraPoints;
+    diagonal.pts += Number(extraPoints || 0);
 
     if (extraPoints === 3) diagonal.g += 1;
     else if (extraPoints === 1) diagonal.e += 1;
@@ -301,29 +375,37 @@
 
     diagonal.gd = diagonal.gf - diagonal.gc;
     diagonal.ppg = diagonal.j ? +(diagonal.pts / diagonal.j).toFixed(2) : 0;
-    diagonal.pending = diagonal.j < 23;
+    diagonal.pending = getPendingFlag(diagonal.j);
 
-    const officialSorted = [...simulated].sort((a, b) =>
-      b.pts - a.pts ||
-      b.gd - a.gd ||
-      b.gf - a.gf ||
-      a.team.localeCompare(b.team)
-    );
+    const officialSorted = simulated.slice().sort(function (a, b) {
+      return (
+        b.pts - a.pts ||
+        b.gd - a.gd ||
+        b.gf - a.gf ||
+        String(a.team || '').localeCompare(String(b.team || ''))
+      );
+    });
 
-    const ppgSorted = [...simulated].sort((a, b) =>
-      b.ppg - a.ppg ||
-      b.pts - a.pts ||
-      b.gd - a.gd ||
-      b.gf - a.gf ||
-      a.team.localeCompare(b.team)
-    );
+    const ppgSorted = simulated.slice().sort(function (a, b) {
+      return (
+        b.ppg - a.ppg ||
+        b.pts - a.pts ||
+        b.gd - a.gd ||
+        b.gf - a.gf ||
+        String(a.team || '').localeCompare(String(b.team || ''))
+      );
+    });
 
     return {
       pts: diagonal.pts,
       j: diagonal.j,
       ppg: diagonal.ppg,
-      officialPos: officialSorted.findIndex(row => isDiagonalTeamName(row.team)) + 1,
-      ppgPos: ppgSorted.findIndex(row => isDiagonalTeamName(row.team)) + 1
+      officialPos: officialSorted.findIndex(function (row) {
+        return isDiagonalTeamName(row.team);
+      }) + 1,
+      ppgPos: ppgSorted.findIndex(function (row) {
+        return isDiagonalTeamName(row.team);
+      }) + 1
     };
   }
 
@@ -331,6 +413,7 @@
   window.escapeHtml = escapeHtml;
   window.getAllMatches = getAllMatches;
   window.getAllPlayers = getAllPlayers;
+  window.getUpcomingMatches = getUpcomingMatches;
   window.getUpcomingMatch = getUpcomingMatch;
   window.getMatchPerspective = getMatchPerspective;
   window.computeDiagonalStatsFromMatches = computeDiagonalStatsFromMatches;
