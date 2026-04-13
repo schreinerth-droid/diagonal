@@ -2,7 +2,6 @@
   'use strict';
 
   const DIAGONAL_NAMES = ['DIAGONAL CLUB ESP. A', 'Diagonal'];
-  const TOTAL_MATCHDAYS = 24;
 
   function safeArray(value) {
     return Array.isArray(value) ? value : [];
@@ -18,7 +17,9 @@
 
   function isDiagonalTeamName(name) {
     const n = normalizeText(name);
-    return DIAGONAL_NAMES.some(team => normalizeText(team) === n) || n.includes('diagonal');
+    return DIAGONAL_NAMES.some(function (team) {
+      return normalizeText(team) === n;
+    }) || n.includes('diagonal');
   }
 
   function escapeHtml(value) {
@@ -28,6 +29,20 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function toTimestamp(value) {
+    const t = new Date(value).getTime();
+    return Number.isFinite(t) ? t : 0;
+  }
+
+  function compareByDateThenMatchday(a, b) {
+    const da = toTimestamp(a.date);
+    const db = toTimestamp(b.date);
+
+    if (da !== db) return da - db;
+
+    return Number(a.j || 0) - Number(b.j || 0);
   }
 
   function getAllMatches() {
@@ -59,32 +74,68 @@
     return [];
   }
 
-  function getUpcomingMatches() {
+  function getRawUpcomingMatches() {
     return safeArray(window.UPCOMING);
-  }
-
-  function getUpcomingMatch() {
-    const playedJs = getAllMatches().map(function (m) {
-      return Number(m.j || 0);
-    });
-
-    const pending = getUpcomingMatches()
-      .filter(function (u) {
-        return playedJs.indexOf(Number(u.j || 0)) === -1;
-      })
-      .sort(function (a, b) {
-        return new Date(a.date) - new Date(b.date);
-      });
-
-    return pending[0] || null;
   }
 
   function getAllStandings() {
     return safeArray(window.STANDINGS);
   }
 
+  function getPlayedMatchdaySet() {
+    const played = new Set();
+
+    getAllMatches().forEach(function (match) {
+      const j = Number(match.j || 0);
+      if (j > 0) played.add(j);
+    });
+
+    return played;
+  }
+
+  function getSeasonTotalMatchdays() {
+    let maxJ = 0;
+
+    getAllMatches().forEach(function (match) {
+      maxJ = Math.max(maxJ, Number(match.j || 0));
+    });
+
+    getRawUpcomingMatches().forEach(function (match) {
+      maxJ = Math.max(maxJ, Number(match.j || 0));
+    });
+
+    getAllStandings().forEach(function (row) {
+      maxJ = Math.max(maxJ, Number(row.j || 0));
+    });
+
+    return maxJ || 0;
+  }
+
   function getPendingFlag(j) {
-    return Number(j || 0) < TOTAL_MATCHDAYS;
+    const total = getSeasonTotalMatchdays();
+    const played = Number(j || 0);
+    return total > 0 && played < total;
+  }
+
+  function getUpcomingMatches() {
+    const playedMatchdays = getPlayedMatchdaySet();
+
+    return getRawUpcomingMatches()
+      .filter(function (match) {
+        return !playedMatchdays.has(Number(match.j || 0));
+      })
+      .slice()
+      .sort(compareByDateThenMatchday);
+  }
+
+  function getUpcomingMatch() {
+    const pending = getUpcomingMatches();
+    return pending[0] || null;
+  }
+
+  function getRemainingUpcomingMatches() {
+    const pending = getUpcomingMatches();
+    return pending.slice(1);
   }
 
   function getMatchPerspective(match) {
@@ -100,13 +151,13 @@
     if (homeIsDiagonal) {
       gf = Number(match.gf || 0);
       gc = Number(match.gc || 0);
-      rival = match.away || '';
+      rival = match.away || match.rival || '';
       venue = 'C';
       score = gf + '-' + gc;
     } else if (awayIsDiagonal) {
       gf = Number(match.gc || 0);
       gc = Number(match.gf || 0);
-      rival = match.home || '';
+      rival = match.home || match.rival || '';
       venue = 'F';
       score = gf + '-' + gc;
     }
@@ -124,7 +175,9 @@
   }
 
   function computeDiagonalStatsFromMatches() {
-    const matches = getAllMatches();
+    const matches = getAllMatches()
+      .slice()
+      .sort(compareByDateThenMatchday);
 
     let wins = 0;
     let draws = 0;
@@ -284,6 +337,8 @@
         const p = getMatchPerspective(match);
         return p.homeIsDiagonal || p.awayIsDiagonal;
       })
+      .slice()
+      .sort(compareByDateThenMatchday)
       .slice(-max)
       .reverse()
       .map(function (match) {
@@ -413,8 +468,11 @@
   window.escapeHtml = escapeHtml;
   window.getAllMatches = getAllMatches;
   window.getAllPlayers = getAllPlayers;
+  window.getRawUpcomingMatches = getRawUpcomingMatches;
   window.getUpcomingMatches = getUpcomingMatches;
   window.getUpcomingMatch = getUpcomingMatch;
+  window.getRemainingUpcomingMatches = getRemainingUpcomingMatches;
+  window.getSeasonTotalMatchdays = getSeasonTotalMatchdays;
   window.getMatchPerspective = getMatchPerspective;
   window.computeDiagonalStatsFromMatches = computeDiagonalStatsFromMatches;
   window.enrichStandingsRow = enrichStandingsRow;
