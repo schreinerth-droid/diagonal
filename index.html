@@ -509,44 +509,47 @@ function renderJugadores(){
 }
 
 function renderArbitros(){
-  var matches = (window.MATCHES || []).slice().sort(function(a,b){
+  var rm = {};
+  var matches = MATCHES.slice().sort(function(a,b){
     return Number(a.j||0) - Number(b.j||0);
   });
 
-  var refs = {};
   matches.forEach(function(m){
     if(!m.ref) return;
-    if(!refs[m.ref]) refs[m.ref]={matches:0,score:0};
-    refs[m.ref].matches++;
-    if(m.res==='G') refs[m.ref].score++;
-    else if(m.res==='P') refs[m.ref].score--;
+    if(!rm[m.ref]) rm[m.ref] = { count: 0, score: 0 };
+    rm[m.ref].count++;
+    if(m.res === 'G') rm[m.ref].score++;
+    else if(m.res === 'P') rm[m.ref].score--;
   });
 
-  var refList = Object.values(refs);
+  var refNames = Object.keys(rm);
 
   document.getElementById('ref-stats').innerHTML =
-    stCard(refList.length,'Distintos','var(--accent)') +
-    stCard(refList.filter(function(r){return r.matches>1;}).length,'Repetidos','') +
-    stCard(refList.filter(function(r){return r.score>0;}).length,'Favorables','var(--win)') +
-    stCard(refList.filter(function(r){return r.score<0;}).length,'Desfavorables','var(--loss)');
+    stCard(refNames.length,'Distintos','var(--accent)') +
+    stCard(refNames.filter(function(name){ return rm[name].count > 1; }).length,'Repetidos','') +
+    stCard(refNames.filter(function(name){ return rm[name].score > 0; }).length,'Favorables','var(--win)') +
+    stCard(refNames.filter(function(name){ return rm[name].score < 0; }).length,'Desfavorables','var(--loss)');
 
   document.getElementById('ref-list').innerHTML = matches.map(function(m){
-    var s = m.res==='G' ? 1 : m.res==='P' ? -1 : 0;
-    var bc = s>0 ? 'rb-fav' : s<0 ? 'rb-des' : 'rb-neu';
-    var bt = s>0 ? 'Favorable' : s<0 ? 'Desfavorable' : 'Neutral';
-    var rival = m.loc==='C' ? (m.away || '—') : (m.home || '—');
+    var s = m.res === 'G' ? 1 : m.res === 'P' ? -1 : 0;
+    var bc = s > 0 ? 'rb-fav' : s < 0 ? 'rb-des' : 'rb-neu';
+    var bt = s > 0 ? 'Favorable' : s < 0 ? 'Desfavorable' : 'Neutral';
+    var rival = m.loc === 'C' ? (m.away || '—') : (m.home || '—');
+    var rep = rm[m.ref] && rm[m.ref].count > 1
+      ? '<span style="font-size:10px;font-weight:700;background:var(--yellow-bg);color:var(--yellow);padding:2px 7px;border-radius:3px;margin-left:6px">×' + rm[m.ref].count + '</span>'
+      : '';
+    var yellows = (m.yellows || []).length;
+    var score = Number(m.gf || 0) + ' - ' + Number(m.gc || 0);
 
     return '<div class="ref-row">' +
-      '<div style="width:30px;font-weight:700;color:var(--ink3)">J'+m.j+'</div>' +
+      '<div style="width:30px;flex-shrink:0;font-size:11px;font-weight:700;color:var(--ink3)">J' + m.j + '</div>' +
       '<div class="ref-name">' +
-        safeText(m.ref || '—') +
-        '<div class="ref-sub">' +
-          safeText(m.refDel || '') + ' · ' + fmtDate(m.date) + ' · vs ' + safeText(rival) +
-        '</div>' +
+        safeText(m.ref || '—') + rep +
+        '<div class="ref-sub">' + fmtDate(m.date) + ' · vs ' + safeText(rival) + ' · ' + score + '</div>' +
       '</div>' +
-      '<div class="rdot res-'+m.res+'">'+rl(m.res)+'</div>' +
-      '<span class="ref-badge '+bc+'">'+bt+'</span>' +
-      '<span style="font-size:10px;font-weight:700;color:var(--yellow);background:var(--yellow-bg);padding:2px 6px;border-radius:3px">🟨 '+((m.yellows||[]).length)+'</span>' +
+      '<div class="rdots"><div class="rdot res-' + m.res + '">' + rl(m.res) + '</div></div>' +
+      '<span class="ref-badge ' + bc + '">' + bt + '</span>' +
+      '<span style="font-size:10px;font-weight:700;color:var(--yellow);background:var(--yellow-bg);padding:2px 6px;border-radius:3px;margin-left:5px">🟨 ' + yellows + '</span>' +
     '</div>';
   }).join('');
 }
