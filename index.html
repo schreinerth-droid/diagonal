@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -514,47 +515,39 @@ function renderArbitros(){
   var refs = {};
   matches.forEach(function(m){
     if(!m.ref) return;
-    if(!refs[m.ref]) refs[m.ref] = { matches: 0, score: 0 };
+    if(!refs[m.ref]) refs[m.ref]={matches:0,score:0};
     refs[m.ref].matches++;
-    if(m.res === 'G') refs[m.ref].score++;
-    else if(m.res === 'P') refs[m.ref].score--;
+    if(m.res==='G') refs[m.ref].score++;
+    else if(m.res==='P') refs[m.ref].score--;
   });
 
   var refList = Object.values(refs);
 
   document.getElementById('ref-stats').innerHTML =
     stCard(refList.length,'Distintos','var(--accent)') +
-    stCard(refList.filter(function(r){ return r.matches > 1; }).length,'Repetidos','') +
-    stCard(refList.filter(function(r){ return r.score > 0; }).length,'Favorables','var(--win)') +
-    stCard(refList.filter(function(r){ return r.score < 0; }).length,'Desfavorables','var(--loss)');
+    stCard(refList.filter(function(r){return r.matches>1;}).length,'Repetidos','') +
+    stCard(refList.filter(function(r){return r.score>0;}).length,'Favorables','var(--win)') +
+    stCard(refList.filter(function(r){return r.score<0;}).length,'Desfavorables','var(--loss)');
 
   document.getElementById('ref-list').innerHTML = matches.map(function(m){
-    var s = m.res === 'G' ? 1 : m.res === 'P' ? -1 : 0;
-    var bc = s > 0 ? 'rb-fav' : s < 0 ? 'rb-des' : 'rb-neu';
-    var bt = s > 0 ? 'Favorable' : s < 0 ? 'Desfavorable' : 'Neutral';
-
-    var rival = m.loc === 'C' ? (m.away || '—') : (m.home || '—');
-    var isRepeat = refs[m.ref] && refs[m.ref].matches > 1;
-    var rep = isRepeat
-      ? ' <span style="font-size:10px;font-weight:700;background:var(--yellow-bg);color:var(--yellow);padding:2px 6px;border-radius:3px">×' + refs[m.ref].matches + '</span>'
-      : '';
-
-    var scoreText = Number(m.gf || 0) + '–' + Number(m.gc || 0);
+    var s = m.res==='G' ? 1 : m.res==='P' ? -1 : 0;
+    var bc = s>0 ? 'rb-fav' : s<0 ? 'rb-des' : 'rb-neu';
+    var bt = s>0 ? 'Favorable' : s<0 ? 'Desfavorable' : 'Neutral';
+    var rival = m.loc==='C' ? (m.away || '—') : (m.home || '—');
 
     return '<div class="ref-row">' +
-      '<div style="width:30px;font-weight:700;color:var(--ink3)">J' + m.j + '</div>' +
+      '<div style="width:30px;font-weight:700;color:var(--ink3)">J'+m.j+'</div>' +
       '<div class="ref-name">' +
-        safeText(m.ref || '—') + rep +
+        safeText(m.ref || '—') +
         '<div class="ref-sub">' +
-          fmtDate(m.date) + ' · vs ' + safeText(rival) + ' · ' + scoreText +
+          safeText(m.refDel || '') + ' · ' + fmtDate(m.date) + ' · vs ' + safeText(rival) +
         '</div>' +
       '</div>' +
-      '<div class="rdot res-' + m.res + '">' + rl(m.res) + '</div>' +
-      '<span class="ref-badge ' + bc + '">' + bt + '</span>' +
-      '<span style="font-size:10px;font-weight:700;color:var(--yellow);background:var(--yellow-bg);padding:2px 6px;border-radius:3px">🟨 ' + ((m.yellows || []).length) + '</span>' +
+      '<div class="rdot res-'+m.res+'">'+rl(m.res)+'</div>' +
+      '<span class="ref-badge '+bc+'">'+bt+'</span>' +
+      '<span style="font-size:10px;font-weight:700;color:var(--yellow);background:var(--yellow-bg);padding:2px 6px;border-radius:3px">🟨 '+((m.yellows||[]).length)+'</span>' +
     '</div>';
   }).join('');
-}
 }
 
 function renderAnalisis(){
