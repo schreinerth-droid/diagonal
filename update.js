@@ -17,9 +17,7 @@
 
   function isDiagonalTeamName(name) {
     const n = normalizeText(name);
-    return DIAGONAL_NAMES.some(function (team) {
-      return normalizeText(team) === n;
-    }) || n.includes('diagonal');
+    return DIAGONAL_NAMES.some(team => normalizeText(team) === n) || n.includes('diagonal');
   }
 
   function escapeHtml(value) {
@@ -31,458 +29,429 @@
       .replace(/'/g, '&#39;');
   }
 
-  function toTimestamp(value) {
-    const t = new Date(value).getTime();
-    return Number.isFinite(t) ? t : 0;
-  }
-
-  function compareByDateThenMatchday(a, b) {
-    const da = toTimestamp(a.date);
-    const db = toTimestamp(b.date);
-
-    if (da !== db) return da - db;
-
-    return Number(a.j || 0) - Number(b.j || 0);
-  }
-
   function getAllMatches() {
     return safeArray(window.MATCHES);
   }
 
   function getAllPlayers() {
-    const src = window.PLAYERS;
-
-    if (Array.isArray(src)) {
-      return src.map(function (player, index) {
-        return {
-          id: player.id || player.playerId || String(index),
-          ...player
-        };
-      });
-    }
-
-    if (src && typeof src === 'object') {
-      return Object.keys(src).map(function (id) {
-        const player = src[id] || {};
-        return {
-          id: id,
-          ...player
-        };
-      });
-    }
-
-    return [];
+    return safeArray(window.PLAYERS);
   }
 
-  function getRawUpcomingMatches() {
-    return safeArray(window.UPCOMING);
-  }
-
-  function getAllStandings() {
-    return safeArray(window.STANDINGS);
-  }
-
-  function getPlayedMatchdaySet() {
-    const played = new Set();
-
-    getAllMatches().forEach(function (match) {
-      const j = Number(match.j || 0);
-      if (j > 0) played.add(j);
+  function getPlayerMap() {
+    const map = {};
+    getAllPlayers().forEach(player => {
+      if (player && player.id) map[player.id] = player;
     });
-
-    return played;
+    return map;
   }
 
-  function getSeasonTotalMatchdays() {
-    let maxJ = 0;
-
-    getAllMatches().forEach(function (match) {
-      maxJ = Math.max(maxJ, Number(match.j || 0));
-    });
-
-    getRawUpcomingMatches().forEach(function (match) {
-      maxJ = Math.max(maxJ, Number(match.j || 0));
-    });
-
-    getAllStandings().forEach(function (row) {
-      maxJ = Math.max(maxJ, Number(row.j || 0));
-    });
-
-    return maxJ || 0;
+  function getPlayerName(playerId) {
+    const map = getPlayerMap();
+    const p = map[playerId];
+    if (!p) return playerId || '-';
+    return p.name || p.nom || p.fullName || playerId;
   }
 
-  function getPendingFlag(j) {
-    const total = getSeasonTotalMatchdays();
-    const played = Number(j || 0);
-    return total > 0 && played < total;
+  function parseResult(res) {
+    const r = normalizeText(res);
+    if (r === 'g' || r === 'w' || r === 'win' || r === 'p') return 'W';
+    if (r === 'e' || r === 'd' || r === 'draw') return 'D';
+    if (r === 'p' || r === 'l' || r === 'loss') return 'L';
+
+    return null;
+  }
+
+  function getPointsFromResult(res) {
+    const r = normalizeText(res);
+    if (r === 'g' || r === 'w' || r === 'win') return 3;
+    if (r === 'e' || r === 'd' || r === 'draw') return 1;
+    if (r === 'p' || r === 'l' || r === 'loss') return 0;
+
+    if (r === 'v') return 3;
+    return 0;
+  }
+
+  function parseMatchDate(match) {
+    if (!match || !match.date) return null;
+    const d = new Date(match.date + 'T00:00:00');
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function parseMatchDateTime(match) {
+    if (!match || !match.date) return null;
+
+    const time = match.time && /^\d{2}:\d{2}$/.test(match.time) ? match.time : '00:00';
+    const dt = new Date(match.date + 'T' + time + ':00');
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+
+  function getTimeSlot(time) {
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) return null;
+
+    const parts = time.split(':').map(Number);
+    if (parts.length !== 2 || Number.isNaN(parts[0]) || Number.isNaN(parts[1])) return null;
+
+    const minutes = (parts[0] * 60) + parts[1];
+
+    if (minutes < 12 * 60) return 'mañana';
+    if (minutes < 16 * 60) return 'mediodía';
+    return 'tarde';
+  }
+
+  function enrichMatch(match) {
+    const enriched = { ...match };
+    enriched.time = match.time && /^\d{2}:\d{2}$/.test(match.time) ? match.time : null;
+    enriched.timeSlot = getTimeSlot(enriched.time);
+    enriched.points = getPointsFromResult(match.res);
+    enriched.datetime = enriched.time ? (match.date + 'T' + enriched.time) : (match.date || null);
+    return enriched;
+  }
+
+  function getEnrichedMatches() {
+    return getAllMatches().map(enrichMatch);
+  }
+
+  function getDiagonalMatches() {
+    return getEnrichedMatches().filter(match => {
+      return isDiagonalTeamName(match.home) || isDiagonalTeamName(match.away);
+    });
+  }
+
+  function sortMatchesAsc(matches) {
+    return safeArray(matches).slice().sort((a, b) => {
+      const da = parseMatchDateTime(a);
+      const db = parseMatchDateTime(b);
+      const ta = da ? da.getTime() : 0;
+      const tb = db ? db.getTime() : 0;
+      return ta - tb;
+    });
+  }
+
+  function sortMatchesDesc(matches) {
+    return safeArray(matches).slice().sort((a, b) => {
+      const da = parseMatchDateTime(a);
+      const db = parseMatchDateTime(b);
+      const ta = da ? da.getTime() : 0;
+      const tb = db ? db.getTime() : 0;
+      return tb - ta;
+    });
+  }
+
+  function getPlayedMatches() {
+    return getDiagonalMatches().filter(match => {
+      return typeof match.gf === 'number' && typeof match.gc === 'number';
+    });
   }
 
   function getUpcomingMatches() {
-    const playedMatchdays = getPlayedMatchdaySet();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    return getRawUpcomingMatches()
-      .filter(function (match) {
-        return !playedMatchdays.has(Number(match.j || 0));
-      })
-      .slice()
-      .sort(compareByDateThenMatchday);
-  }
-
-  function getUpcomingMatch() {
-    const pending = getUpcomingMatches();
-    return pending[0] || null;
-  }
-
-  function getRemainingUpcomingMatches() {
-    const pending = getUpcomingMatches();
-    return pending.slice(1);
-  }
-
-  function getMatchPerspective(match) {
-    const homeIsDiagonal = isDiagonalTeamName(match.home);
-    const awayIsDiagonal = isDiagonalTeamName(match.away);
-
-    let gf = 0;
-    let gc = 0;
-    let rival = '';
-    let venue = '';
-    let score = '';
-
-    if (homeIsDiagonal) {
-      gf = Number(match.gf || 0);
-      gc = Number(match.gc || 0);
-      rival = match.away || match.rival || '';
-      venue = 'C';
-      score = gf + '-' + gc;
-    } else if (awayIsDiagonal) {
-      gf = Number(match.gc || 0);
-      gc = Number(match.gf || 0);
-      rival = match.home || match.rival || '';
-      venue = 'F';
-      score = gf + '-' + gc;
-    }
-
-    return {
-      gf: gf,
-      gc: gc,
-      rival: rival,
-      venue: venue,
-      score: score,
-      result: match.res || '',
-      homeIsDiagonal: homeIsDiagonal,
-      awayIsDiagonal: awayIsDiagonal
-    };
-  }
-
-  function computeDiagonalStatsFromMatches() {
-    const matches = getAllMatches()
-      .slice()
-      .sort(compareByDateThenMatchday);
-
-    let wins = 0;
-    let draws = 0;
-    let losses = 0;
-    let gf = 0;
-    let gc = 0;
-
-    matches.forEach(function (match) {
-      const p = getMatchPerspective(match);
-
-      if (!p.homeIsDiagonal && !p.awayIsDiagonal) return;
-
-      gf += p.gf;
-      gc += p.gc;
-
-      if (match.res === 'G') wins += 1;
-      else if (match.res === 'E') draws += 1;
-      else if (match.res === 'P') losses += 1;
-    });
-
-    return {
-      played: wins + draws + losses,
-      wins: wins,
-      draws: draws,
-      losses: losses,
-      points: wins * 3 + draws,
-      gf: gf,
-      gc: gc,
-      gd: gf - gc
-    };
-  }
-
-  function enrichStandingsRow(row) {
-    const pts = Number(row.pts || 0);
-    const j = Number(row.j || 0);
-    const gf = Number(row.gf || 0);
-    const gc = Number(row.gc || 0);
-
-    return {
-      ...row,
-      pos: Number(row.pos || 0),
-      pts: pts,
-      j: j,
-      g: Number(row.g || 0),
-      e: Number(row.e || 0),
-      p: Number(row.p || 0),
-      gf: gf,
-      gc: gc,
-      gd: gf - gc,
-      ppg: j ? +(pts / j).toFixed(2) : 0,
-      pending: getPendingFlag(j)
-    };
-  }
-
-  function getStandingsData() {
-    return getAllStandings().map(enrichStandingsRow);
-  }
-
-  function getOfficialTable() {
-    return getStandingsData().slice().sort(function (a, b) {
-      return (
-        a.pos - b.pos ||
-        b.pts - a.pts ||
-        b.gd - a.gd ||
-        b.gf - a.gf ||
-        String(a.team || '').localeCompare(String(b.team || ''))
-      );
+    return getDiagonalMatches().filter(match => {
+      const d = parseMatchDate(match);
+      return d && d >= today && (typeof match.gf !== 'number' || typeof match.gc !== 'number');
     });
   }
 
-  function getPerformanceTable() {
-    return getStandingsData().slice().sort(function (a, b) {
-      return (
-        b.ppg - a.ppg ||
-        b.pts - a.pts ||
-        b.gd - a.gd ||
-        b.gf - a.gf ||
-        String(a.team || '').localeCompare(String(b.team || ''))
-      );
+  function getLastPlayedMatch() {
+    const played = sortMatchesDesc(getPlayedMatches());
+    return played.length ? played[0] : null;
+  }
+
+  function getNextMatch() {
+    const upcoming = sortMatchesAsc(getUpcomingMatches());
+    return upcoming.length ? upcoming[0] : null;
+  }
+
+  function getMatchLabel(match) {
+    if (!match) return '-';
+    const rival = isDiagonalTeamName(match.home) ? match.away : match.home;
+    const loc = normalizeText(match.loc) === 'c' ? 'Casa' : 'Fuera';
+    return `J${match.j || '-'} - ${loc} vs ${rival || '-'}`;
+  }
+
+  function getScoreLabel(match) {
+    if (!match || typeof match.gf !== 'number' || typeof match.gc !== 'number') return '-';
+    return `${match.gf}-${match.gc}`;
+  }
+
+  function getTimeLabel(match) {
+    if (!match || !match.time) return '-';
+    return match.time;
+  }
+
+  function getTimeSlotStats(matches) {
+    const stats = {
+      mañana: { played: 0, wins: 0, draws: 0, losses: 0, pts: 0, gf: 0, gc: 0 },
+      mediodía: { played: 0, wins: 0, draws: 0, losses: 0, pts: 0, gf: 0, gc: 0 },
+      tarde: { played: 0, wins: 0, draws: 0, losses: 0, pts: 0, gf: 0, gc: 0 }
+    };
+
+    safeArray(matches).forEach(match => {
+      if (!match.timeSlot) return;
+      if (typeof match.gf !== 'number' || typeof match.gc !== 'number') return;
+
+      const row = stats[match.timeSlot];
+      if (!row) return;
+
+      row.played += 1;
+      row.gf += match.gf;
+      row.gc += match.gc;
+      row.pts += getPointsFromResult(match.res);
+
+      const r = parseResult(match.res);
+      if (r === 'W') row.wins += 1;
+      else if (r === 'D') row.draws += 1;
+      else if (r === 'L') row.losses += 1;
     });
+
+    return stats;
   }
 
-  function getDiagonalStanding() {
-    return getStandingsData().find(function (row) {
-      return isDiagonalTeamName(row.team);
-    }) || null;
-  }
+  function getCriticalGoalsStats(matches) {
+    const stats = {
+      firstHalfLast5: { gf: 0, gc: 0 },
+      secondHalfLast5: { gf: 0, gc: 0 }
+    };
 
-  function getStatusBadge(row) {
-    if (row.pending) {
-      return '<span class="badge pending">Game in hand</span>';
-    }
-    return '<span class="badge good">Level</span>';
-  }
+    safeArray(matches).forEach(match => {
+      safeArray(match.goals).forEach(goal => {
+        const min = Number(goal.min);
+        if (Number.isNaN(min)) return;
 
-  function renderStandingsTable(targetId, mode) {
-    const container = document.getElementById(targetId);
-    if (!container) return;
+        if (min >= 31 && min <= 35) {
+          if (goal.type === 'gf') stats.firstHalfLast5.gf += 1;
+          if (goal.type === 'gc') stats.firstHalfLast5.gc += 1;
+        }
 
-    const data = mode === 'ppg' ? getPerformanceTable() : getOfficialTable();
-
-    if (!data.length) {
-      container.innerHTML = '<div class="empty">No standings data available.</div>';
-      return;
-    }
-
-    container.innerHTML =
-      '<div class="table-wrap">' +
-        '<table>' +
-          '<thead>' +
-            '<tr>' +
-              '<th>#</th>' +
-              '<th>Equipo</th>' +
-              '<th>Pts</th>' +
-              '<th>J</th>' +
-              '<th>G</th>' +
-              '<th>E</th>' +
-              '<th>P</th>' +
-              '<th>GF</th>' +
-              '<th>GC</th>' +
-              '<th>DG</th>' +
-              '<th>PPG</th>' +
-              '<th>Estado</th>' +
-            '</tr>' +
-          '</thead>' +
-          '<tbody>' +
-            data.map(function (row, idx) {
-              const rank = mode === 'ppg' ? idx + 1 : row.pos;
-              const diagonalClass = isDiagonalTeamName(row.team) ? 'diagonal' : '';
-              return (
-                '<tr class="' + diagonalClass + '">' +
-                  '<td>' + rank + '</td>' +
-                  '<td>' + escapeHtml(row.team) + '</td>' +
-                  '<td><strong>' + row.pts + '</strong></td>' +
-                  '<td>' + row.j + '</td>' +
-                  '<td>' + row.g + '</td>' +
-                  '<td>' + row.e + '</td>' +
-                  '<td>' + row.p + '</td>' +
-                  '<td>' + row.gf + '</td>' +
-                  '<td>' + row.gc + '</td>' +
-                  '<td>' + (row.gd > 0 ? '+' : '') + row.gd + '</td>' +
-                  '<td>' + row.ppg.toFixed(2) + '</td>' +
-                  '<td>' + getStatusBadge(row) + '</td>' +
-                '</tr>'
-              );
-            }).join('') +
-          '</tbody>' +
-        '</table>' +
-      '</div>';
-  }
-
-  function getRecentDiagonalMatches(limit) {
-    const max = Number(limit || 5);
-
-    return getAllMatches()
-      .filter(function (match) {
-        const p = getMatchPerspective(match);
-        return p.homeIsDiagonal || p.awayIsDiagonal;
-      })
-      .slice()
-      .sort(compareByDateThenMatchday)
-      .slice(-max)
-      .reverse()
-      .map(function (match) {
-        const p = getMatchPerspective(match);
-        return {
-          ...match,
-          diagonalGf: p.gf,
-          diagonalGc: p.gc,
-          rival: p.rival,
-          venue: p.venue,
-          score: p.score
-        };
-      });
-  }
-
-  function getTopScorers(limit) {
-    const max = Number(limit || 12);
-    const players = getAllPlayers();
-    const goalsByPlayer = {};
-
-    getAllMatches().forEach(function (match) {
-      safeArray(match.goals).forEach(function (goal) {
-        if (goal.type === 'gf' && goal.playerId) {
-          goalsByPlayer[goal.playerId] = (goalsByPlayer[goal.playerId] || 0) + 1;
+        if (min >= 66 && min <= 70) {
+          if (goal.type === 'gf') stats.secondHalfLast5.gf += 1;
+          if (goal.type === 'gc') stats.secondHalfLast5.gc += 1;
         }
       });
     });
 
-    return players
-      .map(function (player) {
-        return {
-          id: player.id,
-          name: player.name || player.nom || player.player || player.id || '',
-          number: player.activeDorsal || player.number || player.dorsal || '',
-          goals: goalsByPlayer[player.id] || 0
-        };
-      })
-      .sort(function (a, b) {
-        return b.goals - a.goals || String(a.name).localeCompare(String(b.name));
-      })
-      .slice(0, max);
+    return stats;
   }
 
-  function getRefereeStats() {
-    const refs = {};
+  function getEarlyYellowImpact(matches) {
+    const stats = {
+      withEarlyYellow: { played: 0, gcAfterYellow: 0, pts: 0 },
+      withoutEarlyYellow: { played: 0, gcComparable: 0, pts: 0 }
+    };
 
-    getAllMatches().forEach(function (match) {
-      const name = match.ref || 'Unknown';
+    safeArray(matches).forEach(match => {
+      const yellows = safeArray(match.yellows);
+      const earlyYellow = yellows.some(card => Number(card.min) <= 10);
 
-      if (!refs[name]) {
-        refs[name] = {
-          name: name,
-          matches: 0,
-          wins: 0,
-          draws: 0,
-          losses: 0
-        };
+      if (earlyYellow) {
+        stats.withEarlyYellow.played += 1;
+        stats.withEarlyYellow.pts += getPointsFromResult(match.res);
+
+        safeArray(match.goals).forEach(goal => {
+          if (goal.type === 'gc' && Number(goal.min) > 10) {
+            stats.withEarlyYellow.gcAfterYellow += 1;
+          }
+        });
+      } else {
+        stats.withoutEarlyYellow.played += 1;
+        stats.withoutEarlyYellow.pts += getPointsFromResult(match.res);
+
+        safeArray(match.goals).forEach(goal => {
+          if (goal.type === 'gc' && Number(goal.min) > 10) {
+            stats.withoutEarlyYellow.gcComparable += 1;
+          }
+        });
       }
-
-      refs[name].matches += 1;
-
-      if (match.res === 'G') refs[name].wins += 1;
-      else if (match.res === 'E') refs[name].draws += 1;
-      else if (match.res === 'P') refs[name].losses += 1;
     });
 
-    return Object.values(refs).sort(function (a, b) {
-      return b.matches - a.matches || a.name.localeCompare(b.name);
-    });
+    return stats;
   }
 
-  function simulateDiagonalScenario(extraPoints) {
-    const simulated = getStandingsData().map(function (row) {
-      return { ...row };
+  function getPlayerMinutesSummary(matches) {
+    const summary = {};
+
+    safeArray(matches).forEach(match => {
+      safeArray(match.titulars).forEach(p => {
+        const id = p.id;
+        if (!id) return;
+
+        if (!summary[id]) {
+          summary[id] = { id, name: getPlayerName(id), matches: 0, starts: 0, totalMinutes: 0 };
+        }
+
+        summary[id].matches += 1;
+        summary[id].starts += 1;
+        summary[id].totalMinutes += typeof p.d === 'number' ? p.d : 70;
+      });
+
+      safeArray(match.suplents).forEach(p => {
+        const id = p.id;
+        if (!id) return;
+
+        if (!summary[id]) {
+          summary[id] = { id, name: getPlayerName(id), matches: 0, starts: 0, totalMinutes: 0 };
+        }
+
+        summary[id].matches += 1;
+        summary[id].totalMinutes += typeof p.d === 'number' ? p.d : 0;
+      });
     });
 
-    const diagonal = simulated.find(function (row) {
-      return isDiagonalTeamName(row.team);
-    });
+    return Object.values(summary).sort((a, b) => b.totalMinutes - a.totalMinutes);
+  }
 
-    if (!diagonal) return null;
+  function buildSummary() {
+    const matches = getPlayedMatches();
+    const sorted = sortMatchesAsc(matches);
 
-    diagonal.j += 1;
-    diagonal.pts += Number(extraPoints || 0);
+    const total = {
+      played: sorted.length,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      pts: 0,
+      gf: 0,
+      gc: 0
+    };
 
-    if (extraPoints === 3) diagonal.g += 1;
-    else if (extraPoints === 1) diagonal.e += 1;
-    else diagonal.p += 1;
+    sorted.forEach(match => {
+      total.gf += Number(match.gf) || 0;
+      total.gc += Number(match.gc) || 0;
+      total.pts += getPointsFromResult(match.res);
 
-    diagonal.gd = diagonal.gf - diagonal.gc;
-    diagonal.ppg = diagonal.j ? +(diagonal.pts / diagonal.j).toFixed(2) : 0;
-    diagonal.pending = getPendingFlag(diagonal.j);
-
-    const officialSorted = simulated.slice().sort(function (a, b) {
-      return (
-        b.pts - a.pts ||
-        b.gd - a.gd ||
-        b.gf - a.gf ||
-        String(a.team || '').localeCompare(String(b.team || ''))
-      );
-    });
-
-    const ppgSorted = simulated.slice().sort(function (a, b) {
-      return (
-        b.ppg - a.ppg ||
-        b.pts - a.pts ||
-        b.gd - a.gd ||
-        b.gf - a.gf ||
-        String(a.team || '').localeCompare(String(b.team || ''))
-      );
+      const r = parseResult(match.res);
+      if (r === 'W') total.wins += 1;
+      else if (r === 'D') total.draws += 1;
+      else if (r === 'L') total.losses += 1;
     });
 
     return {
-      pts: diagonal.pts,
-      j: diagonal.j,
-      ppg: diagonal.ppg,
-      officialPos: officialSorted.findIndex(function (row) {
-        return isDiagonalTeamName(row.team);
-      }) + 1,
-      ppgPos: ppgSorted.findIndex(function (row) {
-        return isDiagonalTeamName(row.team);
-      }) + 1
+      total,
+      timeSlots: getTimeSlotStats(sorted),
+      criticalGoals: getCriticalGoalsStats(sorted),
+      earlyYellowImpact: getEarlyYellowImpact(sorted),
+      playerMinutes: getPlayerMinutesSummary(sorted),
+      lastMatch: getLastPlayedMatch(),
+      nextMatch: getNextMatch()
     };
   }
 
-  window.safeArray = safeArray;
-  window.escapeHtml = escapeHtml;
-  window.getAllMatches = getAllMatches;
-  window.getAllPlayers = getAllPlayers;
-  window.getRawUpcomingMatches = getRawUpcomingMatches;
-  window.getUpcomingMatches = getUpcomingMatches;
-  window.getUpcomingMatch = getUpcomingMatch;
-  window.getRemainingUpcomingMatches = getRemainingUpcomingMatches;
-  window.getSeasonTotalMatchdays = getSeasonTotalMatchdays;
-  window.getMatchPerspective = getMatchPerspective;
-  window.computeDiagonalStatsFromMatches = computeDiagonalStatsFromMatches;
-  window.enrichStandingsRow = enrichStandingsRow;
-  window.getStandingsData = getStandingsData;
-  window.getOfficialTable = getOfficialTable;
-  window.getPerformanceTable = getPerformanceTable;
-  window.getDiagonalStanding = getDiagonalStanding;
-  window.renderStandingsTable = renderStandingsTable;
-  window.getRecentDiagonalMatches = getRecentDiagonalMatches;
-  window.getTopScorers = getTopScorers;
-  window.getRefereeStats = getRefereeStats;
-  window.simulateDiagonalScenario = simulateDiagonalScenario;
+  function renderTimeSlotAnalysis(container) {
+    if (!container) return;
+
+    const summary = buildSummary();
+    const slots = summary.timeSlots;
+
+    const rows = ['mañana', 'mediodía', 'tarde'].map(slot => {
+      const s = slots[slot];
+      const ppg = s.played ? (s.pts / s.played).toFixed(2) : '-';
+      const avgGf = s.played ? (s.gf / s.played).toFixed(2) : '-';
+      const avgGc = s.played ? (s.gc / s.played).toFixed(2) : '-';
+
+      return `
+        <tr>
+          <td>${escapeHtml(slot)}</td>
+          <td>${s.played}</td>
+          <td>${s.wins}</td>
+          <td>${s.draws}</td>
+          <td>${s.losses}</td>
+          <td>${s.pts}</td>
+          <td>${ppg}</td>
+          <td>${avgGf}</td>
+          <td>${avgGc}</td>
+        </tr>
+      `;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="analysis-card">
+        <h3>Franja horaria</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Franja</th>
+              <th>J</th>
+              <th>G</th>
+              <th>E</th>
+              <th>P</th>
+              <th>Pts</th>
+              <th>Pts/J</th>
+              <th>GF/J</th>
+              <th>GC/J</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderQuickInfo() {
+    const lastEl = document.querySelector('[data-last-match]');
+    const nextEl = document.querySelector('[data-next-match]');
+    const summaryEl = document.querySelector('[data-team-summary]');
+
+    const summary = buildSummary();
+
+    if (lastEl && summary.lastMatch) {
+      lastEl.innerHTML = `
+        <strong>${escapeHtml(getMatchLabel(summary.lastMatch))}</strong><br>
+        Resultado: ${escapeHtml(getScoreLabel(summary.lastMatch))}<br>
+        Hora: ${escapeHtml(getTimeLabel(summary.lastMatch))}<br>
+        Franja: ${escapeHtml(summary.lastMatch.timeSlot || '-')}
+      `;
+    }
+
+    if (nextEl && summary.nextMatch) {
+      nextEl.innerHTML = `
+        <strong>${escapeHtml(getMatchLabel(summary.nextMatch))}</strong><br>
+        Fecha: ${escapeHtml(summary.nextMatch.date || '-')}<br>
+        Hora: ${escapeHtml(getTimeLabel(summary.nextMatch))}<br>
+        Franja: ${escapeHtml(summary.nextMatch.timeSlot || '-')}
+      `;
+    }
+
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <strong>Resumen</strong><br>
+        J: ${summary.total.played} -
+        G: ${summary.total.wins} -
+        E: ${summary.total.draws} -
+        P: ${summary.total.losses} -
+        GF: ${summary.total.gf} -
+        GC: ${summary.total.gc} -
+        Pts: ${summary.total.pts}
+      `;
+    }
+  }
+
+  function init() {
+    renderQuickInfo();
+
+    const timeSlotContainer = document.querySelector('[data-analysis-timeslots]');
+    if (timeSlotContainer) renderTimeSlotAnalysis(timeSlotContainer);
+  }
+
+  window.DIAGONAL_UPDATE = {
+    getTimeSlot,
+    getEnrichedMatches,
+    getDiagonalMatches,
+    getPlayedMatches,
+    getUpcomingMatches,
+    getLastPlayedMatch,
+    getNextMatch,
+    getTimeSlotStats,
+    getCriticalGoalsStats,
+    getEarlyYellowImpact,
+    getPlayerMinutesSummary,
+    buildSummary,
+    init
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
