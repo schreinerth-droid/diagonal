@@ -136,6 +136,7 @@ var MATCHES = [
    suplents:[{id:'mikel',d:4},{id:'fj',d:7},{id:'yannick',d:18},{id:'luca',d:19},{id:'mihail',d:29},{id:'santiago',d:77}],
    goals:[{min:15,type:'gf',playerId:'lukas'},{min:69,type:'gf',playerId:'fj'}],
    yellows:[{playerId:'patricio',d:6},{playerId:'gabriel',d:15}],reds:[]},
+
   {j:21,date:'2026-03-10',loc:'C',home:'Diagonal',away:'Sant Ignasi CE A',gf:3,gc:0,res:'G',
    ref:'Garcia Toledo, Yeray',refDel:'Barcelona1',
    titulars:[{id:'steven',d:1},{id:'jordi',d:5},{id:'patricio',d:6},{id:'fj',d:7},{id:'pau',d:8},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'redon',d:22},{id:'mihail',d:29},{id:'santi_e',d:76},{id:'santiago',d:77}],
@@ -157,7 +158,7 @@ var MATCHES = [
    goals:[{min:4,type:'gf',playerId:'yannick'},{min:23,type:'gf',playerId:'santiago'},{min:22,type:'gc',playerId:null},{min:28,type:'gc',playerId:null},{min:36,type:'gc',playerId:null},{min:60,type:'gc',playerId:null}],
    yellows:[],reds:[]},
 
-    {j:25,date:'2026-04-18',loc:'C',home:'Diagonal',away:'Escola de Futbol Premier Barcelona A',gf:0,gc:3,res:'P',
+  {j:25,date:'2026-04-18',loc:'C',home:'Diagonal',away:'Escola de Futbol Premier Barcelona A',gf:0,gc:3,res:'P',
    ref:'Rionegro Perez, David',refDel:'Barcelona1',
    titulars:[{id:'steven',d:1},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'otto',d:10},{id:'jorge',d:11},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'yannick',d:18},{id:'santi_e',d:76},{id:'santiago',d:77}],
    suplents:[{id:'marin',d:2},{id:'lukas',d:12},{id:'luca',d:19},{id:'redon',d:22},{id:'mihail',d:29}],
