@@ -1,5 +1,4 @@
 var UPCOMING=[
-  {j:25,date:'2026-04-19',home:true, rival:'Escola de Futbol Premier Barcelona A'},
   {j:23,date:'2026-04-21',home:true, rival:'Les Corts de Barcelona Club Esp. A'},
   {j:26,date:'2026-04-26',home:false,rival:'Sants, UE. B'},
   {j:27,date:'2026-05-03',home:true, rival:'Escola Collblanc-Torrassa, CE A'},
