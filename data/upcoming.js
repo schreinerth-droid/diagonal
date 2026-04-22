@@ -1,5 +1,4 @@
 var UPCOMING=[
-  {j:23,date:'2026-04-21',home:true, rival:'Les Corts de Barcelona Club Esp. A'},
   {j:26,date:'2026-04-26',home:false,rival:'Sants, UE. B'},
   {j:27,date:'2026-05-03',home:true, rival:'Escola Collblanc-Torrassa, CE A'},
   {j:28,date:'2026-05-10',home:false,rival:"L'Hospitalet, Centre Esports C"},
