@@ -151,6 +151,13 @@ var MATCHES = [
    goals:[{min:14,type:'gf',playerId:'yannick'},{min:17,type:'gc',playerId:null},{min:52,type:'gc',playerId:null},{min:54,type:'gc',playerId:null}],
    yellows:[{playerId:'patricio',d:6}],reds:[{playerId:'steven',d:1}]},
 
+    {j:23,date:'2026-04-21',loc:'C',home:'Diagonal',away:'Les Corts de Barcelona Club Esp. A',gf:6,gc:2,res:'G',
+   ref:'Dembele Sidibe, Babily',refDel:'Barcelona3',
+   titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'fj',d:7},{id:'pau',d:8},{id:'otto',d:10},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'yannick',d:18},{id:'santiago',d:77}],
+   suplents:[{id:'marin',d:2},{id:'jorge',d:11},{id:'lukas',d:12},{id:'redon',d:22}],
+   goals:[{min:6,type:'gc',playerId:null},{min:9,type:'gf',playerId:'otto'},{min:18,type:'gf',playerId:'yannick'},{min:20,type:'gf',playerId:'fj'},{min:27,type:'gf',playerId:'fj'},{min:45,type:'gf',playerId:'santiago'},{min:56,type:'gc',playerId:null},{min:68,type:'gf',playerId:'redon'}],
+   yellows:[{playerId:'patricio',d:6}],reds:[]},
+
   {j:24,date:'2026-04-11',loc:'F',home:'Pª Barc. Anguera C',away:'Diagonal',gf:2,gc:4,res:'P',
    ref:'Redondo Carrera, Benjamin',refDel:'Barcelona1',
    titulars:[{id:'jose',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'lukas',d:12},{id:'bruno',d:17},{id:'yannick',d:18},{id:'luca',d:19},{id:'mihail',d:29},{id:'santiago',d:77}],
