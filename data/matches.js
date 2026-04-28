@@ -172,4 +172,12 @@ var MATCHES = [
    goals:[{min:6,type:'gc',playerId:null},{min:34,type:'gc',playerId:null},{min:57,type:'gc',playerId:null}],
    yellows:[{playerId:'santi_e',d:76}],
    reds:[]}
+  
+    ,{j:26,date:'2026-04-26',loc:'F',home:'Sants UE B',away:'Diagonal',gf:1,gc:2,res:'G',
+   ref:'Parisi Saura, Miquel',refDel:'Barcelona1',
+   titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'fj',d:7},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'redon',d:22},{id:'santiago',d:77}],
+   suplents:[{id:'marin',d:2},{id:'pau',d:8},{id:'jorge',d:11},{id:'luca',d:19},{id:'mihail',d:29}],
+   goals:[{min:22,type:'gf',playerId:'lukas'},{min:38,type:'gf',playerId:'jorge'},{min:46,type:'gc',playerId:null}],
+   yellows:[{playerId:'luca',d:19},{playerId:'mihail',d:29}],
+   reds:[]}
 ];
