@@ -180,4 +180,13 @@ var MATCHES = [
    goals:[{min:22,type:'gf',playerId:'lukas'},{min:38,type:'gf',playerId:'jorge'},{min:46,type:'gc',playerId:null}],
    yellows:[{playerId:'luca',d:19},{playerId:'mihail',d:29}],
    reds:[]}
+
+  ,{j:27,date:'2026-05-02',loc:'C',home:'Diagonal',away:'Escola Collblanc-Torrassa CE A',gf:0,gc:0,res:'E',
+   ref:'Maeztu Velez, Adria',refDel:'Barcelona1',
+   titulars:[{id:'jose',d:1},{id:'mikel',d:4},{id:'patricio',d:6},{id:'fj',d:7},{id:'pau',d:8},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'santi_e',d:76},{id:'santiago',d:77}],
+   suplents:[{id:'marin',d:2},{id:'jordi',d:5},{id:'redon',d:22},{id:'mihail',d:29}],
+   goals:[],
+   yellows:[{playerId:'jordi',d:5}],
+   reds:[]}
+  
 ];
