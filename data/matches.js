@@ -188,5 +188,13 @@ var MATCHES = [
    goals:[],
    yellows:[{playerId:'jordi',d:5}],
    reds:[]}
+
+  ,{j:28,date:'2026-05-10',loc:'F',home:"L'Hospitalet CE C",away:'Diagonal',gf:1,gc:0,res:'P',
+   ref:'Kuzmanov Lleixa, Ivan',refDel:'Baix Llobregat',
+   titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'luca',d:19},{id:'santiago',d:77}],
+   suplents:[{id:'marin',d:2},{id:'bruno',d:17},{id:'redon',d:22},{id:'mihail',d:29}],
+   goals:[{min:70,type:'gc',playerId:null}],
+   yellows:[{playerId:'otto',d:10},{playerId:'patricio',d:6}],
+   reds:[]}
   
 ];
