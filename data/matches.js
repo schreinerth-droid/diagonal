@@ -196,5 +196,13 @@ var MATCHES = [
    goals:[{min:70,type:'gc',playerId:null}],
    yellows:[{playerId:'otto',d:10},{playerId:'patricio',d:6}],
    reds:[]}
+
+    ,{j:29,date:'2026-05-16',loc:'C',home:'Diagonal',away:'Sarrià CP B',gf:4,gc:0,res:'G',
+   ref:'Tessmar Vila, Patrick',refDel:'Barcelona1',
+   titulars:[{id:'steven',d:1},{id:'marin',d:2},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'mihail',d:29}],
+   suplents:[{id:'fj',d:7},{id:'jose',d:13},{id:'yannick',d:18},{id:'luca',d:19},{id:'redon',d:22},{id:'santiago',d:77}],
+   goals:[{min:2,type:'gf',playerId:'lukas'},{min:11,type:'gf',playerId:'otto'},{min:42,type:'gf',playerId:'lukas'},{min:68,type:'gf',playerId:'yannick'}],
+   yellows:[{playerId:'patricio',d:6},{playerId:'jordi',d:5},{playerId:'fj',d:7}],
+   reds:[]}
   
 ];
