@@ -204,5 +204,13 @@ var MATCHES = [
    goals:[{min:2,type:'gf',playerId:'lukas'},{min:11,type:'gf',playerId:'otto'},{min:42,type:'gf',playerId:'lukas'},{min:68,type:'gf',playerId:'yannick'}],
    yellows:[{playerId:'patricio',d:6},{playerId:'jordi',d:5},{playerId:'fj',d:7}],
    reds:[]}
+
+    ,{j:30,date:'2026-05-24',loc:'F',home:'Can Vidalet CF A',away:'Diagonal',gf:0,gc:3,res:'G',
+   ref:'Espin Moya, Pedro',refDel:'Barcelona1',
+   titulars:[{id:'steven',d:1},{id:'marin',d:2},{id:'jordi',d:5},{id:'fj',d:7},{id:'pau',d:8},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'yannick',d:18},{id:'mihail',d:29},{id:'santiago',d:77}],
+   suplents:[{id:'luca',d:19},{id:'tobias',d:21}],
+   goals:[{min:54,type:'gf',playerId:'bruno'},{min:65,type:'gf',playerId:'fj'},{min:69,type:'gf',playerId:'jordi'}],
+   yellows:[{playerId:'yannick',d:18}],
+   reds:[]}
   
 ];
