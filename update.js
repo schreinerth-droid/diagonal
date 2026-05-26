@@ -456,184 +456,156 @@
   }
 })();
 
-(function(){
+(function () {
   'use strict';
 
-  function getMatches(){
-    return Array.isArray(window.MATCHES) ? window.MATCHES.slice().sort((a,b)=>a.j-b.j) : [];
-  }
+  function buildSeasonButton() {
+    if (document.getElementById('season-btn')) return;
 
-  function pts(m){ return m.res==='G'?3:m.res==='E'?1:0; }
-  function playerName(id){
-    if(!id) return 'Rival';
-    const p = window.PLAYERS && window.PLAYERS[id];
-    return p ? (p.name || p.nom || id) : id;
-  }
+    const btn = document.createElement('button');
+    btn.id = 'season-btn';
+    btn.innerText = 'Temporada';
 
-  function statLine(ms){
-    return {
-      pj: ms.length,
-      g: ms.filter(m=>m.res==='G').length,
-      e: ms.filter(m=>m.res==='E').length,
-      p: ms.filter(m=>m.res==='P').length,
-      pts: ms.reduce((s,m)=>s+pts(m),0),
-      gf: ms.reduce((s,m)=>s+m.gf,0),
-      gc: ms.reduce((s,m)=>s+m.gc,0)
-    };
-  }
+    btn.style.position = 'fixed';
+    btn.style.right = '20px';
+    btn.style.bottom = '20px';
+    btn.style.zIndex = '99999';
+    btn.style.background = '#1a3a6b';
+    btn.style.color = '#fff';
+    btn.style.border = 'none';
+    btn.style.padding = '12px 18px';
+    btn.style.borderRadius = '10px';
+    btn.style.cursor = 'pointer';
+    btn.style.fontWeight = '700';
+    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,.2)';
 
-  function card(label,value,sub=''){
-    return `<div class="season-card"><div class="season-label">${label}</div><div class="season-value">${value}</div><div class="season-sub">${sub}</div></div>`;
-  }
+    btn.onclick = function () {
 
-  function table(headers,rows){
-    return `<table class="season-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  }
+      let old = document.getElementById('season-panel');
 
-  function groupGoals(matches){
-    const buckets = [
-      ['0-10',0,10],['11-20',11,20],['21-30',21,30],['31-40',31,40],
-      ['41-50',41,50],['51-60',51,60],['61-70',61,70]
-    ];
-    return buckets.map(([label,a,b])=>{
-      let gf=0,gc=0;
-      matches.forEach(m=>{
-        (m.goals||[]).forEach(g=>{
-          if(g.min>=a && g.min<=b){
-            if(g.type==='gf') gf++;
-            if(g.type==='gc') gc++;
+      if (old) {
+        old.remove();
+        return;
+      }
+
+      const matches = Array.isArray(window.MATCHES)
+        ? [...window.MATCHES].sort((a,b)=>a.j-b.j)
+        : [];
+
+      let pts = 0;
+      let gf = 0;
+      let gc = 0;
+      let wins = 0;
+      let draws = 0;
+      let losses = 0;
+
+      const scorers = {};
+
+      matches.forEach(m => {
+
+        gf += m.gf || 0;
+        gc += m.gc || 0;
+
+        if (m.res === 'G') {
+          wins++;
+          pts += 3;
+        } else if (m.res === 'E') {
+          draws++;
+          pts += 1;
+        } else {
+          losses++;
+        }
+
+        (m.goals || []).forEach(g => {
+          if (g.type === 'gf' && g.playerId) {
+            scorers[g.playerId] = (scorers[g.playerId] || 0) + 1;
           }
         });
+
       });
-      return [label,gf,gc];
-    });
-  }
 
-  function renderSeason(){
-    const matches = getMatches();
-    if(!matches.length) return;
+      const topScorers = Object.entries(scorers)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,5)
+        .map(s => `<li>${s[0]} — ${s[1]} goles</li>`)
+        .join('');
 
-    const total = statLine(matches);
-    const home = statLine(matches.filter(m=>m.loc==='C'));
-    const away = statLine(matches.filter(m=>m.loc==='F'));
+      const panel = document.createElement('div');
+      panel.id = 'season-panel';
 
-    const scorers = {};
-    matches.forEach(m=>(m.goals||[]).forEach(g=>{
-      if(g.type==='gf' && g.playerId){
-        scorers[g.playerId]=(scorers[g.playerId]||0)+1;
-      }
-    }));
-    const scorerRows = Object.entries(scorers)
-      .sort((a,b)=>b[1]-a[1])
-      .map(([id,g])=>[playerName(id),g]);
+      panel.style.position = 'fixed';
+      panel.style.top = '40px';
+      panel.style.left = '40px';
+      panel.style.right = '40px';
+      panel.style.bottom = '40px';
+      panel.style.background = '#f5f5f3';
+      panel.style.zIndex = '99998';
+      panel.style.overflow = 'auto';
+      panel.style.padding = '30px';
+      panel.style.borderRadius = '16px';
+      panel.style.boxShadow = '0 10px 40px rgba(0,0,0,.25)';
 
-    const cards = [
-      card('Partidos',total.pj,`${total.g}G · ${total.e}E · ${total.p}P`),
-      card('Puntos',total.pts,`${(total.pts/total.pj).toFixed(1)} por partido`),
-      card('Goles',`${total.gf}-${total.gc}`,`${total.gf-total.gc>=0?'+':''}${total.gf-total.gc}`),
-      card('Casa',`${home.pts} pts`,`${home.g}G · ${home.e}E · ${home.p}P`),
-      card('Fuera',`${away.pts} pts`,`${away.g}G · ${away.e}E · ${away.p}P`),
-      card('Porterías a cero',matches.filter(m=>m.gc===0).length,'partidos sin encajar')
-    ].join('');
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h1 style="margin:0;">Temporada 2025-26</h1>
+          <button id="close-season-panel" style="
+            border:none;
+            background:#8b1a1a;
+            color:#fff;
+            padding:10px 14px;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:700;
+          ">Cerrar</button>
+        </div>
 
-    const blocks=[];
-    for(let i=0;i<matches.length;i+=5){
-      const ms=matches.slice(i,i+5), s=statLine(ms);
-      blocks.push([`${ms[0].j}-${ms[ms.length-1].j}`,s.pts,`${s.g}-${s.e}-${s.p}`,`${s.gf}-${s.gc}`]);
-    }
+        <div style="
+          display:grid;
+          grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+          gap:14px;
+          margin-bottom:30px;
+        ">
+          <div style="background:#fff;padding:18px;border-radius:12px;">
+            <div style="font-size:12px;color:#666;">PARTIDOS</div>
+            <div style="font-size:34px;font-weight:700;">${matches.length}</div>
+          </div>
 
-    const biggestWin = matches.filter(m=>m.res==='G').sort((a,b)=>(b.gf-b.gc)-(a.gf-a.gc))[0];
-    const worstLoss = matches.filter(m=>m.res==='P').sort((a,b)=>(b.gc-b.gf)-(a.gc-a.gf))[0];
-    const allGoals = matches.flatMap(m=>(m.goals||[]).filter(g=>g.type==='gf').map(g=>({...g,j:m.j})));
-    const fastest = allGoals.sort((a,b)=>a.min-b.min)[0];
-    const latest = allGoals.sort((a,b)=>b.min-a.min)[0];
+          <div style="background:#fff;padding:18px;border-radius:12px;">
+            <div style="font-size:12px;color:#666;">PUNTOS</div>
+            <div style="font-size:34px;font-weight:700;">${pts}</div>
+          </div>
 
-    document.getElementById('season-content').innerHTML = `
-      <section class="season-section">
-        <h2>Resumen de temporada</h2>
-        <div class="season-grid">${cards}</div>
-      </section>
+          <div style="background:#fff;padding:18px;border-radius:12px;">
+            <div style="font-size:12px;color:#666;">BALANCE</div>
+            <div style="font-size:24px;font-weight:700;">${wins}-${draws}-${losses}</div>
+          </div>
 
-      <section class="season-section">
-        <h2>Forma por bloques</h2>
-        ${table(['Jornadas','Pts','G-E-P','GF-GC'],blocks)}
-      </section>
+          <div style="background:#fff;padding:18px;border-radius:12px;">
+            <div style="font-size:12px;color:#666;">GOLES</div>
+            <div style="font-size:24px;font-weight:700;">${gf}-${gc}</div>
+          </div>
+        </div>
 
-      <section class="season-section">
-        <h2>Casa vs fuera</h2>
-        ${table(['Tipo','PJ','Pts','G-E-P','GF-GC'],[
-          ['Casa',home.pj,home.pts,`${home.g}-${home.e}-${home.p}`,`${home.gf}-${home.gc}`],
-          ['Fuera',away.pj,away.pts,`${away.g}-${away.e}-${away.p}`,`${away.gf}-${away.gc}`]
-        ])}
-      </section>
+        <div style="background:#fff;padding:20px;border-radius:12px;">
+          <h2 style="margin-top:0;">Top goleadores</h2>
+          <ol>${topScorers}</ol>
+        </div>
+      `;
 
-      <section class="season-section">
-        <h2>Goles por tramo</h2>
-        ${table(['Minutos','GF','GC'],groupGoals(matches))}
-      </section>
+      document.body.appendChild(panel);
 
-      <section class="season-section">
-        <h2>Goleadores</h2>
-        ${table(['Jugador','Goles'],scorerRows)}
-      </section>
-
-      <section class="season-section">
-        <h2>Récords</h2>
-        ${table(['Récord','Dato'],[
-          ['Mayor victoria',biggestWin ? `J${biggestWin.j}: ${biggestWin.gf}-${biggestWin.gc}` : '-'],
-          ['Peor derrota',worstLoss ? `J${worstLoss.j}: ${worstLoss.gf}-${worstLoss.gc}` : '-'],
-          ['Gol más rápido',fastest ? `${playerName(fastest.playerId)} ${fastest.min}'` : '-'],
-          ['Gol más tardío',latest ? `${playerName(latest.playerId)} ${latest.min}'` : '-']
-        ])}
-      </section>
-    `;
-  }
-
-  function installSeasonTab(){
-    if(document.getElementById('season-view')) return;
-
-    const style=document.createElement('style');
-    style.textContent=`
-      #season-view{display:none;padding:18px}
-      .season-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-      .season-card{background:#fff;border:1px solid #e2ddd7;border-radius:10px;padding:14px}
-      .season-label{font-size:12px;color:#777;text-transform:uppercase}
-      .season-value{font-size:24px;font-weight:700;margin-top:4px}
-      .season-sub{font-size:13px;color:#666;margin-top:4px}
-      .season-section{margin-bottom:24px}
-      .season-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden}
-      .season-table th,.season-table td{padding:9px 10px;border-bottom:1px solid #eee;text-align:left}
-      .season-table th{background:#f0ede8;font-size:12px;text-transform:uppercase}
-    `;
-    document.head.appendChild(style);
-
-    const view=document.createElement('section');
-    view.id='season-view';
-    view.innerHTML='<div id="season-content"></div>';
-    document.body.appendChild(view);
-
-    const nav=document.querySelector('nav,.tabs,.nav-tabs,.menu,header');
-    const btn=document.createElement('button');
-    btn.textContent='Temporada';
-    btn.type='button';
-    btn.className='tab-btn season-tab-btn';
-
-    btn.onclick=function(){
-      document.querySelectorAll('main section, .view, .tab-content, [id$="-view"]').forEach(el=>{
-        el.style.display='none';
-      });
-      view.style.display='block';
-      renderSeason();
-      window.scrollTo({top:0,behavior:'smooth'});
+      document.getElementById('close-season-panel').onclick = function () {
+        panel.remove();
+      };
     };
 
-    if(nav) nav.appendChild(btn);
-    else document.body.insertBefore(btn,document.body.firstChild);
+    document.body.appendChild(btn);
   }
 
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',installSeasonTab);
-  }else{
-    installSeasonTab();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', buildSeasonButton);
+  } else {
+    buildSeasonButton();
   }
+
 })();
