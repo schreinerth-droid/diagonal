@@ -455,3 +455,185 @@
     init();
   }
 })();
+
+(function(){
+  'use strict';
+
+  function getMatches(){
+    return Array.isArray(window.MATCHES) ? window.MATCHES.slice().sort((a,b)=>a.j-b.j) : [];
+  }
+
+  function pts(m){ return m.res==='G'?3:m.res==='E'?1:0; }
+  function playerName(id){
+    if(!id) return 'Rival';
+    const p = window.PLAYERS && window.PLAYERS[id];
+    return p ? (p.name || p.nom || id) : id;
+  }
+
+  function statLine(ms){
+    return {
+      pj: ms.length,
+      g: ms.filter(m=>m.res==='G').length,
+      e: ms.filter(m=>m.res==='E').length,
+      p: ms.filter(m=>m.res==='P').length,
+      pts: ms.reduce((s,m)=>s+pts(m),0),
+      gf: ms.reduce((s,m)=>s+m.gf,0),
+      gc: ms.reduce((s,m)=>s+m.gc,0)
+    };
+  }
+
+  function card(label,value,sub=''){
+    return `<div class="season-card"><div class="season-label">${label}</div><div class="season-value">${value}</div><div class="season-sub">${sub}</div></div>`;
+  }
+
+  function table(headers,rows){
+    return `<table class="season-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  }
+
+  function groupGoals(matches){
+    const buckets = [
+      ['0-10',0,10],['11-20',11,20],['21-30',21,30],['31-40',31,40],
+      ['41-50',41,50],['51-60',51,60],['61-70',61,70]
+    ];
+    return buckets.map(([label,a,b])=>{
+      let gf=0,gc=0;
+      matches.forEach(m=>{
+        (m.goals||[]).forEach(g=>{
+          if(g.min>=a && g.min<=b){
+            if(g.type==='gf') gf++;
+            if(g.type==='gc') gc++;
+          }
+        });
+      });
+      return [label,gf,gc];
+    });
+  }
+
+  function renderSeason(){
+    const matches = getMatches();
+    if(!matches.length) return;
+
+    const total = statLine(matches);
+    const home = statLine(matches.filter(m=>m.loc==='C'));
+    const away = statLine(matches.filter(m=>m.loc==='F'));
+
+    const scorers = {};
+    matches.forEach(m=>(m.goals||[]).forEach(g=>{
+      if(g.type==='gf' && g.playerId){
+        scorers[g.playerId]=(scorers[g.playerId]||0)+1;
+      }
+    }));
+    const scorerRows = Object.entries(scorers)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([id,g])=>[playerName(id),g]);
+
+    const cards = [
+      card('Partidos',total.pj,`${total.g}G · ${total.e}E · ${total.p}P`),
+      card('Puntos',total.pts,`${(total.pts/total.pj).toFixed(1)} por partido`),
+      card('Goles',`${total.gf}-${total.gc}`,`${total.gf-total.gc>=0?'+':''}${total.gf-total.gc}`),
+      card('Casa',`${home.pts} pts`,`${home.g}G · ${home.e}E · ${home.p}P`),
+      card('Fuera',`${away.pts} pts`,`${away.g}G · ${away.e}E · ${away.p}P`),
+      card('Porterías a cero',matches.filter(m=>m.gc===0).length,'partidos sin encajar')
+    ].join('');
+
+    const blocks=[];
+    for(let i=0;i<matches.length;i+=5){
+      const ms=matches.slice(i,i+5), s=statLine(ms);
+      blocks.push([`${ms[0].j}-${ms[ms.length-1].j}`,s.pts,`${s.g}-${s.e}-${s.p}`,`${s.gf}-${s.gc}`]);
+    }
+
+    const biggestWin = matches.filter(m=>m.res==='G').sort((a,b)=>(b.gf-b.gc)-(a.gf-a.gc))[0];
+    const worstLoss = matches.filter(m=>m.res==='P').sort((a,b)=>(b.gc-b.gf)-(a.gc-a.gf))[0];
+    const allGoals = matches.flatMap(m=>(m.goals||[]).filter(g=>g.type==='gf').map(g=>({...g,j:m.j})));
+    const fastest = allGoals.sort((a,b)=>a.min-b.min)[0];
+    const latest = allGoals.sort((a,b)=>b.min-a.min)[0];
+
+    document.getElementById('season-content').innerHTML = `
+      <section class="season-section">
+        <h2>Resumen de temporada</h2>
+        <div class="season-grid">${cards}</div>
+      </section>
+
+      <section class="season-section">
+        <h2>Forma por bloques</h2>
+        ${table(['Jornadas','Pts','G-E-P','GF-GC'],blocks)}
+      </section>
+
+      <section class="season-section">
+        <h2>Casa vs fuera</h2>
+        ${table(['Tipo','PJ','Pts','G-E-P','GF-GC'],[
+          ['Casa',home.pj,home.pts,`${home.g}-${home.e}-${home.p}`,`${home.gf}-${home.gc}`],
+          ['Fuera',away.pj,away.pts,`${away.g}-${away.e}-${away.p}`,`${away.gf}-${away.gc}`]
+        ])}
+      </section>
+
+      <section class="season-section">
+        <h2>Goles por tramo</h2>
+        ${table(['Minutos','GF','GC'],groupGoals(matches))}
+      </section>
+
+      <section class="season-section">
+        <h2>Goleadores</h2>
+        ${table(['Jugador','Goles'],scorerRows)}
+      </section>
+
+      <section class="season-section">
+        <h2>Récords</h2>
+        ${table(['Récord','Dato'],[
+          ['Mayor victoria',biggestWin ? `J${biggestWin.j}: ${biggestWin.gf}-${biggestWin.gc}` : '-'],
+          ['Peor derrota',worstLoss ? `J${worstLoss.j}: ${worstLoss.gf}-${worstLoss.gc}` : '-'],
+          ['Gol más rápido',fastest ? `${playerName(fastest.playerId)} ${fastest.min}'` : '-'],
+          ['Gol más tardío',latest ? `${playerName(latest.playerId)} ${latest.min}'` : '-']
+        ])}
+      </section>
+    `;
+  }
+
+  function installSeasonTab(){
+    if(document.getElementById('season-view')) return;
+
+    const style=document.createElement('style');
+    style.textContent=`
+      #season-view{display:none;padding:18px}
+      .season-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+      .season-card{background:#fff;border:1px solid #e2ddd7;border-radius:10px;padding:14px}
+      .season-label{font-size:12px;color:#777;text-transform:uppercase}
+      .season-value{font-size:24px;font-weight:700;margin-top:4px}
+      .season-sub{font-size:13px;color:#666;margin-top:4px}
+      .season-section{margin-bottom:24px}
+      .season-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden}
+      .season-table th,.season-table td{padding:9px 10px;border-bottom:1px solid #eee;text-align:left}
+      .season-table th{background:#f0ede8;font-size:12px;text-transform:uppercase}
+    `;
+    document.head.appendChild(style);
+
+    const view=document.createElement('section');
+    view.id='season-view';
+    view.innerHTML='<div id="season-content"></div>';
+    document.body.appendChild(view);
+
+    const nav=document.querySelector('nav,.tabs,.nav-tabs,.menu,header');
+    const btn=document.createElement('button');
+    btn.textContent='Temporada';
+    btn.type='button';
+    btn.className='tab-btn season-tab-btn';
+
+    btn.onclick=function(){
+      document.querySelectorAll('main section, .view, .tab-content, [id$="-view"]').forEach(el=>{
+        el.style.display='none';
+      });
+      view.style.display='block';
+      renderSeason();
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+
+    if(nav) nav.appendChild(btn);
+    else document.body.insertBefore(btn,document.body.firstChild);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',installSeasonTab);
+  }else{
+    installSeasonTab();
+  }
+})();
