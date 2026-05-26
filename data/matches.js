@@ -151,7 +151,7 @@ var MATCHES = [
    goals:[{min:14,type:'gf',playerId:'yannick'},{min:17,type:'gc',playerId:null},{min:52,type:'gc',playerId:null},{min:54,type:'gc',playerId:null}],
    yellows:[{playerId:'patricio',d:6}],reds:[{playerId:'steven',d:1}]},
 
-    {j:23,date:'2026-04-21',loc:'C',home:'Diagonal',away:'Les Corts de Barcelona Club Esp. A',gf:6,gc:2,res:'G',
+  {j:23,date:'2026-04-21',loc:'C',home:'Diagonal',away:'Les Corts de Barcelona Club Esp. A',gf:6,gc:2,res:'G',
    ref:'Dembele Sidibe, Babily',refDel:'Barcelona3',
    titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'fj',d:7},{id:'pau',d:8},{id:'otto',d:10},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'yannick',d:18},{id:'santiago',d:77}],
    suplents:[{id:'marin',d:2},{id:'jorge',d:11},{id:'lukas',d:12},{id:'redon',d:22}],
@@ -170,47 +170,39 @@ var MATCHES = [
    titulars:[{id:'steven',d:1},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'otto',d:10},{id:'jorge',d:11},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'yannick',d:18},{id:'santi_e',d:76},{id:'santiago',d:77}],
    suplents:[{id:'marin',d:2},{id:'lukas',d:12},{id:'luca',d:19},{id:'redon',d:22},{id:'mihail',d:29}],
    goals:[{min:6,type:'gc',playerId:null},{min:34,type:'gc',playerId:null},{min:57,type:'gc',playerId:null}],
-   yellows:[{playerId:'santi_e',d:76}],
-   reds:[]}
-  
-    ,{j:26,date:'2026-04-26',loc:'F',home:'Sants UE B',away:'Diagonal',gf:2,gc:1,res:'G',
+   yellows:[{playerId:'santi_e',d:76}],reds:[]},
+
+  {j:26,date:'2026-04-26',loc:'F',home:'Sants UE B',away:'Diagonal',gf:2,gc:1,res:'G',
    ref:'Parisi Saura, Miquel',refDel:'Barcelona1',
    titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'fj',d:7},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'redon',d:22},{id:'santiago',d:77}],
    suplents:[{id:'marin',d:2},{id:'pau',d:8},{id:'jorge',d:11},{id:'luca',d:19},{id:'mihail',d:29}],
    goals:[{min:22,type:'gf',playerId:'lukas'},{min:38,type:'gf',playerId:'jorge'},{min:46,type:'gc',playerId:null}],
-   yellows:[{playerId:'luca',d:19},{playerId:'mihail',d:29}],
-   reds:[]}
+   yellows:[{playerId:'luca',d:19},{playerId:'mihail',d:29}],reds:[]},
 
-  ,{j:27,date:'2026-05-02',loc:'C',home:'Diagonal',away:'Escola Collblanc-Torrassa CE A',gf:0,gc:0,res:'E',
+  {j:27,date:'2026-05-02',loc:'C',home:'Diagonal',away:'Escola Collblanc-Torrassa CE A',gf:0,gc:0,res:'E',
    ref:'Maeztu Velez, Adria',refDel:'Barcelona1',
    titulars:[{id:'jose',d:1},{id:'mikel',d:4},{id:'patricio',d:6},{id:'fj',d:7},{id:'pau',d:8},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'santi_e',d:76},{id:'santiago',d:77}],
    suplents:[{id:'marin',d:2},{id:'jordi',d:5},{id:'redon',d:22},{id:'mihail',d:29}],
-   goals:[],
-   yellows:[{playerId:'jordi',d:5}],
-   reds:[]}
+   goals:[],yellows:[{playerId:'jordi',d:5}],reds:[]},
 
-,{j:26,date:'2026-04-26',loc:'F',home:'Sants UE B',away:'Diagonal',gf:2,gc:1,res:'G',
- ref:'Parisi Saura, Miquel',refDel:'Barcelona1',
- titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'fj',d:7},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'redon',d:22},{id:'santiago',d:77}],
- suplents:[{id:'marin',d:2},{id:'pau',d:8},{id:'jorge',d:11},{id:'luca',d:19},{id:'mihail',d:29}],
- goals:[{min:22,type:'gf',playerId:'lukas'},{min:38,type:'gf',playerId:'jorge'},{min:46,type:'gc',playerId:null}],
- yellows:[{playerId:'luca',d:19},{playerId:'mihail',d:29}],
- reds:[]},
-  
-{j:28,date:'2026-05-10',loc:'F',home:"L'Hospitalet CE C",away:'Diagonal',gf:0,gc:1,res:'P',
- ref:'Kuzmanov Lleixa, Ivan',refDel:'Baix Llobregat',
- titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'luca',d:19},{id:'santiago',d:77}],
- suplents:[{id:'marin',d:2},{id:'bruno',d:17},{id:'redon',d:22},{id:'mihail',d:29}],
- goals:[{min:70,type:'gc',playerId:null}],
- yellows:[{playerId:'otto',d:10},{playerId:'patricio',d:6}],
- reds:[]},
+  {j:28,date:'2026-05-10',loc:'F',home:"L'Hospitalet CE C",away:'Diagonal',gf:0,gc:1,res:'P',
+   ref:'Kuzmanov Lleixa, Ivan',refDel:'Baix Llobregat',
+   titulars:[{id:'steven',d:1},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'yannick',d:18},{id:'luca',d:19},{id:'santiago',d:77}],
+   suplents:[{id:'marin',d:2},{id:'bruno',d:17},{id:'redon',d:22},{id:'mihail',d:29}],
+   goals:[{min:70,type:'gc',playerId:null}],
+   yellows:[{playerId:'otto',d:10},{playerId:'patricio',d:6}],reds:[]},
 
-{j:30,date:'2026-05-24',loc:'F',home:'Can Vidalet CF A',away:'Diagonal',gf:3,gc:0,res:'G',
- ref:'Espin Moya, Pedro',refDel:'Barcelona1',
- titulars:[{id:'steven',d:1},{id:'marin',d:2},{id:'jordi',d:5},{id:'fj',d:7},{id:'pau',d:8},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'yannick',d:18},{id:'mihail',d:29},{id:'santiago',d:77}],
- suplents:[{id:'luca',d:19},{id:'tobias',d:21}],
- goals:[{min:54,type:'gf',playerId:'bruno'},{min:65,type:'gf',playerId:'fj'},{min:69,type:'gf',playerId:'jordi'}],
- yellows:[{playerId:'yannick',d:18}],
- reds:[]}
-  
+  {j:29,date:'2026-05-16',loc:'C',home:'Diagonal',away:'Sarrià CP B',gf:4,gc:0,res:'G',
+   ref:'Tessmar Vila, Patrick',refDel:'Barcelona1',
+   titulars:[{id:'steven',d:1},{id:'marin',d:2},{id:'mikel',d:4},{id:'jordi',d:5},{id:'patricio',d:6},{id:'pau',d:8},{id:'otto',d:10},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'mihail',d:29}],
+   suplents:[{id:'fj',d:7},{id:'jose',d:13},{id:'yannick',d:18},{id:'luca',d:19},{id:'redon',d:22},{id:'santiago',d:77}],
+   goals:[{min:2,type:'gf',playerId:'lukas'},{min:11,type:'gf',playerId:'otto'},{min:42,type:'gf',playerId:'lukas'},{min:68,type:'gf',playerId:'yannick'}],
+   yellows:[{playerId:'patricio',d:6},{playerId:'jordi',d:5},{playerId:'fj',d:7}],reds:[]},
+
+  {j:30,date:'2026-05-24',loc:'F',home:'Can Vidalet CF A',away:'Diagonal',gf:3,gc:0,res:'G',
+   ref:'Espin Moya, Pedro',refDel:'Barcelona1',
+   titulars:[{id:'steven',d:1},{id:'marin',d:2},{id:'jordi',d:5},{id:'fj',d:7},{id:'pau',d:8},{id:'lukas',d:12},{id:'gabriel',d:15},{id:'bruno',d:17},{id:'yannick',d:18},{id:'mihail',d:29},{id:'santiago',d:77}],
+   suplents:[{id:'luca',d:19},{id:'tobias',d:21}],
+   goals:[{min:54,type:'gf',playerId:'bruno'},{min:65,type:'gf',playerId:'fj'},{min:69,type:'gf',playerId:'jordi'}],
+   yellows:[{playerId:'yannick',d:18}],reds:[]}
 ];
